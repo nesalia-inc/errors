@@ -39,3 +39,9 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      # Apps/web SEO regression suite (apps/web/tests/seo). Runs after the
+      # root test pipeline so we benefit from the existing install cache.
+      # The suite is a pure-Vitest run; no real Next build is required.
+      - name: Run apps/web SEO tests
+        run: pnpm --filter web test:run

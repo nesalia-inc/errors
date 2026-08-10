@@ -79,3 +79,9 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     </html>
   );
 }
+
+// Re-export the JSON-LD component so the SEO regression suite can render the
+// same blocks without booting the full layout (which depends on `next/font`,
+// Vercel Analytics, and the Fumadocs UI provider — none of which work under
+// happy-dom).
+export { JsonLd };

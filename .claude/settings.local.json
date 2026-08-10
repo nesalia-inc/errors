@@ -15,13 +15,6 @@
       "Edit(//tmp/**)",
       "Bash(rm */tmp/*)",
 
-      "Read(~/**)",
-      "Write(~/**)",
-      "Edit(~/**)",
-      "!Read(./**)",
-      "!Write(./**)",
-      "!Edit(./**)",
-
       "Bash(kill *)",
       "Bash(pkill *)",
       "Bash(killall *)",

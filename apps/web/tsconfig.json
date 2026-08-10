@@ -16,7 +16,9 @@
     "incremental": true,
     "paths": {
       "@/*": ["./src/*"],
-      "collections/*": ["./.source/*"]
+      "collections/*": ["./.source/*"],
+      "~llms-txt-route": ["./src/app/llms.txt/route.ts"],
+      "~llms-full-txt-route": ["./src/app/llms-full.txt/route.ts"]
     },
     "plugins": [
       {
