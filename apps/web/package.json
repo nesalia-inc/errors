@@ -11,7 +11,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "postinstall": "fumadocs-mdx && next typegen",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "type-check:test": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
@@ -33,13 +34,13 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^4.3.0",
+    "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^9.0.0",
     "eslint-config-next": "16.2.6",
-    "happy-dom": "^15.0.0",
+    "happy-dom": "^20.11.2",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.10"
   }
 }
