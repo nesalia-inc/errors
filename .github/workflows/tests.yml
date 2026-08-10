@@ -39,3 +39,18 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      # Apps/web SEO regression suite (apps/web/tests/seo). Runs after the
+      # root test pipeline so we benefit from the existing install cache.
+      # The suite is a pure-Vitest run; no real Next build is required.
+      - name: Run apps/web SEO tests
+        run: pnpm --filter web test:run
+
+      # Apps/web has a test-specific tsconfig that enables
+      # `allowImportingTsExtensions` so tests can target routes whose
+      # directory names contain a dot (e.g. `llms.txt/route.ts`). The
+      # production tsconfig does not enable it, so we run type-check:test
+      # explicitly. The regular `pnpm turbo type-check` is run on the
+      # rest of the workspace by the `Type Check` workflow.
+      - name: Type-check apps/web test suite
+        run: pnpm --filter web type-check:test

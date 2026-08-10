@@ -18,6 +18,21 @@ export const metadata: Metadata = {
   },
 };
 
+function HeadLinks() {
+  return (
+    <>
+      <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+      <link
+        rel="alternate"
+        type="application/rss+xml"
+        title="@deessejs/errors Blog"
+        href="/blog/rss.xml"
+      />
+      <meta name="google-site-verification" content="0RLsnP4YRHmMY4H36hDjwCJekCf62MsZpnNGZ1mJwww" />
+    </>
+  );
+}
+
 function JsonLd() {
   const websiteJsonLd = {
     '@context': 'https://schema.org',
@@ -79,3 +94,9 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     </html>
   );
 }
+
+// Re-export the JSON-LD and head-links components so the SEO regression
+// suite can render them without booting the full layout (which depends on
+// `next/font`, Vercel Analytics, and the Fumadocs UI provider — none of
+// which work under happy-dom).
+export { JsonLd, HeadLinks };

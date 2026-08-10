@@ -1,0 +1,84 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SEO snapshots > llms.txt (first 4 KB + total length assertion) 1`] = `
+"# Index
+
+- [Getting Started](/docs/index)
+- [Error Factory](/docs/error-factory)
+- [API Reference](/docs/api-reference)
+"
+`;
+
+exports[`SEO snapshots > llms-full.txt (length assertion + head snapshot) 1`] = `
+"# Getting Started (/docs/index)
+
+# Getting Started
+
+Get started with @deessejs/errors.
+
+# Error Factory (/docs/error-factory)
+
+# Error Factory
+
+Create custom error types with the error() function.
+
+# API Reference (/docs/api-reference)
+
+# API Reference
+
+Complete API reference for all exports from @deessejs/errors."
+`;
+
+exports[`SEO snapshots > robots.txt 1`] = `
+"User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /llms.txt
+Disallow: /llms.mdx/
+Sitemap: https://errors.deessejs.com/sitemap.xml
+"
+`;
+
+exports[`SEO snapshots > sitemap.xml (lastmod normalised) 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://errors.deessejs.com</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>weekly</changefreq><priority>1</priority>
+  </url>
+  <url>
+    <loc>https://errors.deessejs.com/docs</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>weekly</changefreq><priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://errors.deessejs.com/blog</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>weekly</changefreq><priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://errors.deessejs.com/docs/index</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>monthly</changefreq><priority>0.8</priority>
+    <image:image><image:loc>https://errors.deessejs.com/og/docs/index/image.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://errors.deessejs.com/docs/error-factory</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>monthly</changefreq><priority>0.8</priority>
+    <image:image><image:loc>https://errors.deessejs.com/og/docs/error-factory/image.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://errors.deessejs.com/docs/api-reference</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>monthly</changefreq><priority>0.8</priority>
+    <image:image><image:loc>https://errors.deessejs.com/og/docs/api-reference/image.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://errors.deessejs.com/blog/getting-started-with-deessejs-errors</loc>
+    <lastmod>__SNAPSHOT__</lastmod>
+    <changefreq>monthly</changefreq><priority>0.7</priority>
+  </url>
+</urlset>"
+`;
