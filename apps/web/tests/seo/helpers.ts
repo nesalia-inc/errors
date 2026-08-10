@@ -93,7 +93,6 @@ function renderSitemapXml(entries: SitemapEntry[]): string {
       const images = (e.images ?? [])
         .map((u) => `<image:image><image:loc>${u}</image:loc></image:image>`)
         .join('');
-      const xhtml = images ? ` xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"` : '';
       return `  <url>
     <loc>${e.url}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ''}
     ${changefreq}${priority}${images ? `\n    ${images}` : ''}
@@ -101,7 +100,7 @@ function renderSitemapXml(entries: SitemapEntry[]): string {
     })
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${urls ? '' : ''}>${urls ? '\n' + urls : ''}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls ? '\n' + urls : ''}
 </urlset>`;
 }
 

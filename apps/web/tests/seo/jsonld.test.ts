@@ -8,7 +8,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderServerComponent, extractJsonLdBlocks } from './helpers';
-import { layoutJsonLdScript } from './fixtures/layout';
+// Importing directly from the production layout lets the SEO suite render
+// the same JSON-LD blocks the site emits. `tsconfig.test.json` enables
+// `allowImportingTsExtensions` for tests only, so the `.ts` extension is
+// accepted by tsc.
+import { JsonLd as layoutJsonLdScript } from '../../src/app/layout.tsx';
 
 // See invariants.test.ts for the rationale on `process.cwd()`.
 const pkg = JSON.parse(
