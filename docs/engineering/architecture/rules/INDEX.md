@@ -5,6 +5,18 @@ Every rule is a durable, always-on constraint that every contribution
 must respect. Rules are enforced through code review; selected rules
 are enforced through CI lint as the harness matures.
 
+> "If the type says it's not null, trust the type. If the type is
+> wrong, fix the type. Don't add runtime null checks for values that
+> can't be null."
+>
+> — Miguel Pizza, _No Defensive Null Checks_, Maintainable
+> TypeScript doctrine.
+
+The slogan of the project. Rule 0001 elevates this as the
+operating principle behind every invariant; rule 0004
+operationalises it for runtime guards. The remaining rules
+inherit from it.
+
 ## The eleven rules at a glance
 
 | #    | Rule                                             | One-sentence summary                                                                                                                                                                     |
@@ -20,7 +32,7 @@ are enforced through CI lint as the harness matures.
 | 0009 | Open Extension, Closed Modification              | A function that branches on an internally-defined enumeration dispatches through a Map or typed table; new values are added by extending the registry.                                   |
 | 0010 | Typed Environment Access                         | `process.env` is read in exactly one file per workspace; the rest of the codebase imports a typed accessor.                                                                              |
 | 0011 | Filenames Are kebab-case                         | Every file in this repository is named in lowercase letters, digits, and hyphens; no camelCase, PascalCase, snake_case.                                                                  |
-| 0012 | Prefer `type` Over `interface`                   | Shapes are declared with `type`; `interface` is reserved for declaration merging, class implementation of open shapes, and host type augmentation.                                   |
+| 0012 | Prefer `type` Over `interface`                   | Shapes are declared with `type`; `interface` is reserved for declaration merging, class implementation of open shapes, and host type augmentation.                                       |
 
 ## How to read this folder
 

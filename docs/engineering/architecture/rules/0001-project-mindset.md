@@ -83,6 +83,31 @@ guidelines; they are the floor.
     artefact. If it needs explanation to be recognised as good, the
     work is not good enough.
 
+## The trust-the-type principle
+
+The single sentence that operationalises the ten invariants:
+
+> "If the type says it's not null, trust the type. If the type is
+> wrong, fix the type. Don't add runtime null checks for values
+> that can't be null."
+>
+> — Miguel Pizza, _No Defensive Null Checks_, Maintainable
+> TypeScript doctrine.
+
+Every invariant in this rule is a consequence of that principle.
+The compiler is the first reviewer (invariant 9); the compiler says
+"not null", the runtime says "I trust you" — or, if the compiler
+is wrong, the fix is in the type, not in the runtime (rule 0004
+operationalises this). No conscious debt (invariant 2) means no
+guard that papers over a type we are afraid to fix. No speculative
+abstractions (invariant 4) means no abstract `defensive(...)`
+helper that catches everything on the assumption that anything
+might happen.
+
+The principle is the slogan of the project. A reader who
+remembers only one sentence from this rule set should remember
+this one.
+
 ## Enforcement
 
 - **Code review** is the primary gate. A reviewer who sees any of the

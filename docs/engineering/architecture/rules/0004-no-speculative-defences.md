@@ -3,6 +3,13 @@
 **Status**: Active (enforced through code review).
 **Date**: 2026-08-11.
 
+> "If the type says it's not null, trust the type. If the type is
+> wrong, fix the type. Don't add runtime null checks for values that
+> can't be null."
+>
+> — Miguel Pizza, _No Defensive Null Checks_, Maintainable
+> TypeScript doctrine.
+
 ## Rule
 
 A runtime guard exists to handle one of two cases:
