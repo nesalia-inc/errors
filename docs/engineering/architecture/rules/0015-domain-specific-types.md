@@ -122,7 +122,8 @@ function transfer(fromAccountId: string, toAccountId: string, amount: number): v
 }
 ```
 
-The right shape, branded types for identifiers:
+When the right shape applies — multiple semantic IDs in the same
+context:
 
 ```ts
 // Good — each identifier is a distinct type. The compiler refuses
@@ -137,6 +138,47 @@ function transfer(from: AccountId, to: AccountId, amount: number): void {
 // transfer(customerA, accountB, 100) — type error at the call site,
 // before the function runs.
 ```
+
+When the branded type does **not** apply — single identifier with
+no internal structure:
+
+```ts
+// Bad — the brand adds no information. The id is just an
+// incremental or UUID string. Branding forces every consumer to
+// construct the branded type, which is friction without benefit.
+type OrderId = string & { readonly __brand: 'OrderId' };
+
+function getOrder(id: OrderId): Order {
+  // ...
+}
+
+// The caller has to do this:
+getOrder(order.id as OrderId);
+// Or this:
+getOrder({ value: order.id } as OrderId);
+
+// Both are friction. The compiler was never going to confuse
+// `OrderId` with `CustomerId` if there is only one id type.
+```
+
+When the codebase has only one identifier per domain value
+(`OrderId` and nothing else), the primitive is the right shape.
+The brand would be ceremony without value. The right move is:
+
+```ts
+// Just use the primitive. The type name is the contract.
+function getOrder(id: string): Order {
+  // ...
+}
+
+getOrder(order.id);
+```
+
+The brand is justified only when the codebase has **two or more
+IDs of the same primitive type that must not be confused**. The
+moment a second ID appears (`OrderId` and `CustomerId` next to
+each other in a transfer function, say), the brand becomes the
+cheapest way to tell them apart at compile time.
 
 The branded type has the same runtime shape as `string`, but the
 type system distinguishes them. The consumer cannot swap
