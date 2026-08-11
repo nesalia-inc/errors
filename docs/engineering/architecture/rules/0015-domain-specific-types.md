@@ -66,11 +66,16 @@ sendNotification('Hello, world!', 'usr_123');
 The right shape, domain-specific types:
 
 ```ts
-// Good — each value is what it is.
+// Good — each value is what it is. Literal unions are extracted as
+// named domain types so the shape is reusable across the codebase
+// and the literal strings appear in one place.
+type MessageType = 'text' | 'image' | 'audio';
+type MessagePriority = 'low' | 'normal' | 'high';
+
 type Message = {
   readonly content: string;
-  readonly type: 'text' | 'image' | 'audio';
-  readonly priority?: 'low' | 'normal' | 'high';
+  readonly type: MessageType;
+  readonly priority?: MessagePriority;
   readonly correlationId?: string;
 };
 
@@ -85,6 +90,23 @@ function sendNotification(message: Message, recipient: UserId): void {
 sendNotification({ content: 'Hello, world!', type: 'text' }, { value: 'usr_123' });
 // The compiler checks the shape. The reader does not have to guess.
 ```
+
+The literal unions are extracted as named types (`MessageType`,
+`MessagePriority`) rather than inlined because:
+
+- The same set of literals appears in multiple places (the type,
+  the validation function, the rendering function). Extracting
+  them once keeps the literal strings in **one place**; adding a
+  new value is one line in the type and the compiler enforces
+  that every consumer handles it.
+- The name carries the meaning. A function parameter typed as
+  `MessageType` is more readable than one typed as the literal
+  union `'text' | 'image' | 'audio'`. The reader sees the
+  concept; the literal is one step removed.
+- The union is **reusable**. Other types that need the same set
+  of literals (`NotificationFilter`, `MessageDraft`,
+  `MessageSummary`) reuse `MessageType` instead of repeating the
+  union.
 
 The shape of `Message` is **open to extension** without breaking
 existing callers. Adding `priority` is one line in the type
