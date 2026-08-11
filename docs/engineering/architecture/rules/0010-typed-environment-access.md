@@ -1,0 +1,138 @@
+# 0010 — Typed Environment Access
+
+**Status**: Active (enforced through code review).
+**Date**: 2026-08-11.
+
+## Rule
+
+No business-logic file reads `process.env`, `globalThis`, or any
+other runtime global directly. Every environment value is read
+through a **typed accessor module** that:
+
+1. Declares the expected keys as a literal-union type or a schema.
+2. Reads the values exactly once at module load (or behind an
+   explicit, memoised function).
+3. Returns typed values, not strings, to the rest of the codebase.
+
+The accessor module is the only place in the codebase that touches
+runtime globals. Every other file imports the typed accessor.
+
+## Why
+
+`process.env.X` is a `string | undefined` with no documentation, no
+type, and no validation. Every read repeats the same type assertion
+that hides the value's real shape. Two modules reading the same key
+may disagree about what it means. A typo in the key name compiles.
+
+The typed accessor solves all four problems in one move. The keys
+are declared once; the values are parsed once; the rest of the
+codebase gets a function call that returns the right type. The
+accessor becomes the place where the runtime meets the type system,
+and there is exactly one such place.
+
+This is also the rule that lets the codebase avoid the runtime
+dependency on `@types/node` (rule 0006). The accessor declares its
+own ambient `process` shape; every other file does not have to.
+
+## What this looks like in practice
+
+A `process.env` read scattered across the codebase:
+
+```ts
+// In one module
+const legacyGate = process?.env?.DEESSEJS_ERRORS_LEGACY_TEMPLATES;
+if (legacyGate === '1') return;
+
+// In another module
+const logLevel = process?.env?.LOG_LEVEL ?? 'info';
+
+// In a third module
+const apiKey = process?.env?.API_KEY;
+```
+
+Each read redeclares `process` because `@types/node` is not in scope.
+Each read uses `?.` and `??` to defend against the absence of
+`process`. None of the keys are documented. None of the values are
+validated.
+
+The same logic centralised:
+
+```ts
+// env.ts — the only file that touches process.env
+type Environment = {
+  DEESSEJS_ERRORS_LEGACY_TEMPLATES?: '1' | undefined;
+  LOG_LEVEL?: 'debug' | 'info' | 'warn' | 'error';
+  API_KEY?: string;
+};
+
+declare const process: { env: Environment } | undefined;
+
+function readEnvironment(): Environment {
+  return (process as { env: Environment } | undefined)?.env ?? {};
+}
+
+const environment: Environment = readEnvironment();
+
+// env.ts is also the only file allowed to declare `process`.
+```
+
+Every other file imports the typed accessor:
+
+```ts
+import { environment } from './env.js';
+
+if (environment.DEESSEJS_ERRORS_LEGACY_TEMPLATES === '1') return;
+const logLevel = environment.LOG_LEVEL ?? 'info';
+```
+
+No cast in any consumer. No duplicated `?.` chains. The keys are
+documented in one place. The values are validated in one place.
+
+## When the rule does not apply
+
+A test fixture, a debug script, or a build-time tool that runs once
+is allowed to read `process.env` directly. The rule applies to
+**code that ships in the runtime**: the library, the apps, the
+shared modules. The boundary between "tooling" and "runtime" is
+sharp; do not blur it.
+
+A Node-API integration that genuinely needs runtime global
+(`globalThis.crypto.subtle`, `process.versions.node` for capability
+detection) is allowed, but the read happens inside a small typed
+module and the rest of the codebase imports the typed accessor.
+
+## How to refactor a scattered read
+
+When you find `process.env` references in business code:
+
+1. List every key that appears.
+2. Create `env.ts` (or `config.ts`) at the appropriate boundary
+   (the library, the app, the workspace).
+3. Declare the environment as a literal-union type, with each key
+   optional and each value typed.
+4. Move the reads into `env.ts`. Each read happens once.
+5. Export a typed `environment` object or a typed `getEnv()`
+   function.
+6. Replace every `process.env` reference in business code with the
+   import.
+
+The refactor is mechanical and reviewable in one PR.
+
+## Enforcement
+
+- **Code review**. A reviewer who sees `process.env` in a business
+  file (anything under `src/` that ships at runtime) blocks the PR.
+- **Grep gate**. A standing check before release: `grep -r
+"process\.env" src/` returns only the accessor module. If any
+  other file shows up, the release is blocked until the references
+  are migrated.
+- **CI lint** (future). A custom rule or `no-restricted-syntax`
+  can flag `process.env` access outside the accessor module. The
+  rule's existence is the enforcement signal even before it is
+  automated.
+
+## Exceptions
+
+A file that **defines** the accessor (the file the rule says is the
+only place `process.env` is read) is allowed to access it. That
+file is the rule, not the exception.
