@@ -1,0 +1,159 @@
+# 0006 — Technology Choices: Assumptions Made Explicit
+
+**Status**: Active (enforced through code review and release process).
+**Date**: 2026-08-11.
+
+## Rule
+
+Every technology choice that shapes the codebase — language mode,
+module system, validation strategy, dependency philosophy, runtime
+target — must be a **deliberate assumption**, not an inheritance from
+defaults.
+
+A deliberate assumption is:
+
+1. Stated in writing, in a place a contributor will find it (an ADR
+   in `decisions/`, a rule in `rules/`, or a comment at the boundary
+   where the assumption bites).
+2. Justified in terms of what it rules out, not just what it enables.
+   "We use TypeScript strict mode" is not enough; "We use TypeScript
+   strict mode so that the compiler is the first reviewer of every
+   PR" is.
+3. Revisited when the assumption starts costing more than it saves.
+   The cost shows up as test-suite patches that exist only to satisfy
+   the type system, or as dependency conflicts at every release.
+
+The defaults of the language, the framework, or the package manager
+are not assumptions. They are accidents of choice. Treating them as
+assumptions is how a codebase drifts from "we chose this" to "it just
+happened to be like that".
+
+## Why
+
+A foundation library reaches users who do not share its assumptions.
+The choice of ESM-only, the choice of a specific validator, the
+choice of a Node.js version, the choice of CommonJS-or-not, all of
+these become contracts that downstream code must respect. A choice
+that was not deliberate becomes a constraint that no one can
+explain.
+
+The same logic applies inside the codebase: a function that silently
+relies on a Promise being resolved synchronously, a module that
+assumes Node.js 22 features, a config that depends on a specific
+build tool's behaviour. Each of these is an assumption made by an
+author who did not have to think about the alternative. When the
+alternative becomes relevant — when a Node version is dropped, when
+a build tool is replaced, when a user reports a bug — the assumption
+becomes a wall.
+
+## The shape of a deliberate technology assumption
+
+Every assumption in this codebase should answer four questions in a
+single paragraph:
+
+- **What is the choice?** "ESM-only TypeScript, published as `.js`
+  with `.d.ts` declarations. No CommonJS shim."
+- **What does it enable?** "Consumers import from `@scope/pkg` and
+  get tree-shaking, top-level await, and exact types from the
+  package source."
+- **What does it rule out?** "Consumers on CommonJS resolvers
+  cannot use this package without dynamic `import()` or a build
+  step. We accept that exclusion because the alternative (a CJS
+  shim) would double the surface area to maintain."
+- **When would we revisit?** "When Node.js ends ESM-only support
+  (it has not announced this), or when a downstream pattern
+  suggests the exclusion is becoming a tax rather than a choice."
+
+A choice without a "what does it rule out" is the smell. Every
+choice rules something out; an author who cannot name what is
+ruled out has not understood the choice.
+
+## Specific choices this codebase commits to
+
+These are the assumptions made explicit. New assumptions join this
+list, they do not replace it.
+
+- **TypeScript strict mode.** The compiler is the first reviewer.
+  No `any` leak, no implicit `any`, no unchecked index access.
+- **ESM-only.** No CommonJS shim, no `module: "commonjs"`, no
+  dynamic require from the published surface. A consumer on CJS
+  uses dynamic `import()`.
+- **Standard Schema for runtime validation.** The validation
+  contract is the schema, not the validator. Zod, Valibot, and
+  ArkType all implement Standard Schema; the consumer chooses.
+  Pinning to a specific validator would couple every consumer to
+  a release cadence that is not ours.
+- **Dependency minimalism.** The runtime surface is the library
+  plus its declared peer dependencies. A new runtime dependency
+  must justify itself (rule 0001, invariant 8); a new dev
+  dependency must justify itself by what it enables in CI or in the
+  inner loop.
+- **Function-based API surface.** No classes on the consumer side.
+  Factories, predicates, and combinators are the public shape. The
+  reason: classes introduce an inheritance coupling that the
+  consumer did not ask for. Functions compose without inheritance.
+- **Honest runtime.** No transpilation tricks that hide the runtime
+  target. The code is written for the runtime it ships to.
+
+## How to add a new assumption
+
+When a PR introduces a new technology choice — a new dependency, a
+new build step, a new runtime feature, a new compiler flag — the PR
+description must:
+
+1. Name the choice.
+2. State what it enables.
+3. State what it rules out.
+4. State under what circumstances the choice would be revisited.
+
+If any of the four is missing, the PR is incomplete and the
+reviewer should ask for it.
+
+When the choice is durable — it will shape the codebase for a year
+or more — the same four answers live in an ADR under
+`architecture/decisions/`. When the choice is local to a module, the
+four answers live in a comment at the boundary where the choice
+bites.
+
+## What this looks like in violation
+
+A PR that adds `pnpm add lodash` with the commit message "needed for
+deep clone". What is missing:
+
+- What does lodash enable that the standard library does not?
+- What does lodash rule out (license risk, release cadence,
+  surface area, etc.)?
+- Under what circumstances would we revisit?
+
+The PR adds an assumption without naming it. The next contributor who
+looks for "why lodash?" finds nothing and either keeps it (because
+removing it feels risky) or duplicates it (because they do not know
+whether to add or remove).
+
+A second smell: a `tsconfig.json` with `"strict": false` because the
+project started before strict mode was the default. The assumption
+"TypeScript with relaxed checks" was inherited from a default, not
+chosen. It becomes a wall every time a contributor wants to enable a
+strict-mode feature.
+
+## Enforcement
+
+- **PR review**. A reviewer who sees a new dependency, a new build
+  step, a new compiler flag, or a new runtime feature without a
+  four-answer justification in the PR description blocks the PR.
+- **Release audit**. A standing review at release time lists every
+  dependency and every technology assumption. Anything that has lost
+  its justification (the dependency is no longer used, the choice
+  no longer applies) is removed in the same release.
+- **Quarterly review**. The list of "specific choices this codebase
+  commits to" above is reviewed. Stale choices are either reaffirmed
+  with a current justification or marked for removal.
+
+## Exceptions
+
+A transitive dependency installed by a direct dependency is not a
+choice and is not subject to this rule. The choice was the direct
+dependency; the transitive follows. If a transitive dependency's
+behaviour becomes load-bearing, that is a smell to investigate
+under rule 0001 invariant 8 ("no dependency without
+justification"), not a rule on its own.
