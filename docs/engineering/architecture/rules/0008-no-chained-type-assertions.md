@@ -89,11 +89,13 @@ ask what the cast is for."
 
 ## What this looks like in violation
 
-Two patterns that this rule exists to catch.
+Two patterns that this rule exists to catch. Each is shown bad
+then good.
 
-The first, common:
+**The first, common — chained cast on a value the author controls:**
 
 ```ts
+// Bad — the author could have typed `instance` correctly from the start.
 const instance = new Error(message) as unknown as Record<typeof FACTORY_SYMBOL, () => unknown>;
 instance[FACTORY_SYMBOL] = ErrorFactoryInstance;
 ```
@@ -104,22 +106,60 @@ exist. The author could have declared `instance` as
 `ErrorInstance<T>` from the start and assigned the symbol via the
 declared property — no cast needed.
 
-The second, defensive:
+```ts
+// Good — the constructor's return type carries the right shape; the
+// property assignment goes through the declared type.
+const instance = new Error(message) as ErrorInstance<T>;
+instance[FACTORY_SYMBOL] = ErrorFactoryInstance;
+```
+
+One cast. The cast crosses one boundary (the `Error` constructor
+returns a base `Error`, not the augmented `ErrorInstance<T>`). The
+property assignment is on the declared type, not a re-invented
+shape.
+
+**The second, defensive — single cast at the wrong layer:**
 
 ```ts
+// Bad — the cast is one level, but it is in business logic, not at a boundary.
 const marker = error as Record<typeof FACTORY_SYMBOL, unknown>;
 const factory = marker[FACTORY_SYMBOL];
 ```
 
-The cast is one level, but the read is unguarded. The right shape is
-a typed accessor:
+The cast is in business logic. The `error` value crossed no IPC,
+no deserialisation boundary, no foreign realm. The cast is a leak
+of internal knowledge into the call site.
 
 ```ts
+// Good — the cast lives inside a named accessor that is the only
+// place it appears.
 const factory = getFactory(error);
 ```
 
 Where `getFactory` returns `ErrorFactory | undefined` and the cast
-lives inside it.
+lives inside it. The cast is now at a named boundary; the business
+logic is honest about what it knows.
+
+## The positive example — when a single cast is correct
+
+A single cast crossing **one** named boundary is allowed. Example:
+
+```ts
+// Good — the cast crosses one boundary: the JSON parse returned a
+// value of unknown shape; the guard below narrows without a second
+// cast.
+const raw = JSON.parse(payload) as unknown;
+if (!isShape(raw)) {
+  throw new InvalidPayloadError(payload);
+}
+return raw;
+```
+
+One cast, one boundary. The guard below the cast does the structural
+work. If the guard is missing, this is a violation of rule 0004 (no
+speculative defences), not a violation of rule 0008. The two rules
+compound cleanly: a cast at a boundary without a guard is 0004's
+smell; a chain of casts is 0008's smell.
 
 ## Enforcement
 
