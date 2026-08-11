@@ -1,0 +1,126 @@
+# 0003 — File Placement: Decide Before You Create
+
+**Status**: Active (enforced through code review).
+**Date**: 2026-08-11.
+
+## Rule
+
+Every new file or directory is created **after** a deliberate decision
+about where it belongs. The decision is made before the file is
+written, not justified after.
+
+Concretely:
+
+1. Before creating the file, the author states (in the PR description,
+   in the commit body, or in code review) **why** this file lives
+   here and not somewhere else. "It felt right" is not a justification.
+2. If the file holds a single function, the default placement is **next
+   to its sole caller**, in the caller's concern folder. It is not a
+   "common utility" until there are at least two callers in different
+   concerns.
+3. If the file is a candidate for "common utils", the author must
+   demonstrate the **second use site** before extracting. Until then,
+   the duplication is the cheaper choice.
+
+## Why
+
+The instinct to drop a helper into a shared `utils.ts` (or to create a
+`utils.ts` to host it) is an act of **premature centralisation**. The
+function feels reusable, so we put it where "everyone can find it".
+Two months later, the function has one caller, the file is the
+graveyard of half-finished ideas, and the next contributor adds their
+own helper next to it without reading the first one. Six months later,
+the file has seventeen unrelated helpers and no shared concept.
+
+The cost of misplacing a file grows faster than the cost of a single
+duplicate. A duplicate is at worst two lines that say the same thing
+in two places; a misplaced file is a wrong contract that the rest of
+the codebase imports.
+
+The discipline of "decide before you create" forces the author to
+think about the **lifetime** of the file. A helper next to its caller
+has the lifetime of the caller; a helper in `utils.ts` has the
+lifetime of "everything". The shorter lifetime is the honest
+contract.
+
+## How to decide
+
+Ask four questions, in order. Any "no" answers the question of whether
+this file belongs at all.
+
+1. **What concern does it serve?** If the answer is "only one
+   concern", the file goes in that concern. If "two or more
+   concerns", continue.
+2. **Is the second use site already real?** Not "I imagine using
+   this elsewhere". A real second use site: a different concern that
+   already needs this function today. If the second site is
+   speculative, keep the function near its first caller.
+3. **Is the shared concept narrower than "utility"?** "Validation
+   helpers" is a concept. "String utilities" is not. A concept-narrow
+   module (`validation/helpers.ts`, `formatting/dates.ts`) ages
+   better than a generic `utils/`.
+4. **Does the name of the new file describe what it does?** A file
+   named `helpers.ts`, `misc.ts`, `stuff.ts` is almost always wrong.
+   A file named `date-formatter.ts`, `assert-never.ts`,
+   `http-status.ts` describes its purpose and ages well.
+
+## When extraction is appropriate
+
+A function moves to a shared location when:
+
+- It is called from at least two distinct concerns.
+- The concept the function represents is named (not "a thing that
+  trims strings" but "an RFC 3986 percent-encoder").
+- The signature is stable: no caller has needed to extend it with
+  optional flags yet.
+
+A constant moves to a shared location when:
+
+- It is referenced from at least two concerns.
+- It is a value the rest of the codebase would otherwise have to
+  duplicate or hard-code.
+
+A type moves to a shared location when:
+
+- It is used as a contract by two or more concerns.
+- The type is small and self-contained (no cross-cutting dependencies).
+
+## What this looks like in violation
+
+The smell that this rule exists to catch:
+
+```
+src/
+├── utils/
+│   ├── index.ts
+│   ├── date.ts        # only used by report formatter
+│   ├── string.ts      # only used by error message builder
+│   └── number.ts      # only used by metrics collector
+```
+
+Three files, three single callers, one shared parent. The parent
+exists because the author thought "these might be useful elsewhere".
+They were not useful elsewhere; they never will be. The author
+anticipated reuse that did not come. The right shape would have been
+to keep each helper inside its sole caller's concern folder.
+
+## Enforcement
+
+- **Code review**. A reviewer who sees a new file under a
+  `utils/` or `common/` directory without a justifying comment
+  and a second use site blocks the PR.
+- **File naming**. Files named `utils.ts`, `helpers.ts`, `misc.ts`,
+  `common.ts`, `stuff.ts` are blocked at review. The author is
+  asked to name the file after what it does.
+- **Quarterly audit**. A standing review of "what lives in the
+  common directories" is part of release prep. Files that lost
+  their second use site are moved back to their last surviving
+  caller's folder.
+
+## Exceptions
+
+A genuine cross-cutting helper — for example, an `assertNever` exhaustiveness
+guard, or a date format shared by logs, reports, and tests — lives in
+a top-level module. The module's name must describe what it does
+(`assert-never.ts`, `iso-date.ts`), not what it is (`utils.ts`). The
+author must demonstrate the multiple use sites in the PR.
