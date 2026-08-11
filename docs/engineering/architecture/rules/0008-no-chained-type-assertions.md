@@ -180,3 +180,66 @@ foreign-realm boundary may legitimately require a single `unknown`
 cast on the receiving side. The cast must be at the boundary, not
 deeper in the call chain. If the cast moves into business logic, it
 is no longer a boundary cast and is forbidden.
+
+## What senior practitioners say
+
+The rule is not a stylistic preference; it is the operational
+form of a position shared by senior TypeScript practitioners. Three
+sources capture the consensus:
+
+> "Casting like this takes away TypeScript's power because you are
+> now telling it what to believe rather than the tooling basing
+> that belief on logic, inference, etc."
+>
+> — Darryl Edwards, _TypeScript – don't misuse casting_, Code
+> Krispies, June 2024.
+
+Edwards's point is that `as unknown as Y` is not a workaround; it
+is the abdication of the type system's job. The author is
+substituting their own reasoning for the compiler's reasoning,
+and the compiler can no longer help. The reasoning that was lost
+is the reasoning the reader would have benefited from.
+
+> "When we use type assertion we are basically telling the
+> TypeScript compiler that we know what the type is and it should
+> trust us, i.e. we know what we are doing. The problem with this
+> is that we prevent TypeScript from helping us where it should
+> and take on that responsibility ourselves."
+>
+> — Maina Wycliffe, _Avoid using Type Assertions in TypeScript_,
+> All Things TypeScript, October 2023.
+
+Wycliffe makes the responsibility transfer explicit. The cast
+is a contract: "I, the author, am now responsible for this
+type." The reader inherits that responsibility when they touch
+the code. A cast at a boundary is a documented contract; a cast in
+business logic is an undocumented one.
+
+> "Any external data has an `unknown` type by default until it is
+> inferred."
+>
+> — Anton Beluzhenko, _Why `as unknown as Type` should be banned_,
+> JavaScript in Plain English, April 2024.
+
+Beluzhenko frames the legitimate case. A value at a boundary is
+`unknown` by definition — the contract is that the next step is
+inference (via a guard, a parser, or a schema). The cast
+`as unknown` at the boundary is honest; the cast `as unknown as Y`
+at the same boundary is dishonest because it skips the inference
+step that the boundary demands.
+
+The three sources converge on a single operational rule: a single
+cast is acceptable at a boundary, paired with a guard; a chain of
+casts is never acceptable. This rule is the operational form of
+that position.
+
+## See also
+
+- **Rule 0004** — No Speculative Defences: the rule that covers
+  casts at a boundary without a guard. The two rules compound:
+  a cast at a boundary without a guard is 0004's smell; a chain
+  of casts is 0008's smell.
+- **Rule 0012** — Prefer `type` Over `interface`: the type
+  discipline this rule relies on. A `type` declaration that
+  requires a cast to use is a violation of 0008; the declaration is
+  the wrong shape.
