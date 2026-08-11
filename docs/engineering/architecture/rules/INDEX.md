@@ -36,6 +36,7 @@ inherit from it.
 | 0013 | Entity-First Naming                              | Any name that ends in `-er` (`Manager`, `Service`, `Handler`, `CancelOrderHandler`) is refused; only entity names (`OrderCancellation`) are accepted.                                    |
 | 0014 | Functions Over Classes for Public API            | Classes are internal implementation details; the public API exports factory functions (`group()`, `createGroup()`), never `new ClassName()`.                                             |
 | 0015 | Domain-Specific Types Over Primitives            | A `Message` is a `Message` (with `content`, `type`, …), not a bare `string`; an `Id` is a branded type, not a bare `string`. Primitives cross boundaries only at conversion functions.   |
+| 0016 | No Generic Verbs                                 | A function's verb must encode the transformation (`decode`, `parse`, `validate`) and the return type must encode the result; `process`, `convert`, `handle`, `do` are refused.           |
 
 ## How to read this folder
 
