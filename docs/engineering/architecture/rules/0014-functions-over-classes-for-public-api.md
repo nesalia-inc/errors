@@ -349,3 +349,26 @@ the host; the augmentation is `interface`, not `class`.
   surface is one of the explicit choices the codebase commits to.
   Adding a class is a change to that commitment, not a local
   refactor.
+
+## Sources
+
+- **Abramov, Dan.** _How to Use Classes and Sleep at Night._
+  October 2015. The position the rule follows: "resist making
+  classes your public API; you can always hide your classes
+  behind factory functions; if you expose them, people will
+  inherit from them in ways that make zero sense to you but
+  that you may break in the future." Abramov's point is the
+  strictest among senior practitioners; the rule adopts it.
+- **Salcescu, Cristian.** _Class vs Factory function: exploring
+  the way forward._ freeCodeCamp, March 2018. The
+  encapsulation argument: a factory function closes by default,
+  a class opens by default. The rule picks the closed default.
+- **Abramov, Dan.** _How to Use Classes and Sleep at Night._
+  Cited again for the duck-typing corollary: don't expect people
+  to use your classes; prefer duck typing when accepting
+  inputs.
+- **MobX Cookbook.** _Classes VS Functions for Stores._ The
+  practical confirmation that the factory function pattern
+  works in TypeScript: `ReturnType<typeof factory>` infers the
+  type from the factory, preserving DRY between class and
+  type.

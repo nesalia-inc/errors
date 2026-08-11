@@ -184,6 +184,17 @@ git log.
   commits to" above is reviewed. Stale choices are either reaffirmed
   with a current justification or marked for removal.
 
+## Sources
+
+This rule is a synthesis of the project's own architectural
+commitments. No single external reference anchors it. The
+four-question template (what, enables, rules out, revisits) is
+modelled on the _Architecture Decision Record_ convention
+popularised by Michael Nygard's _Documenting Architecture
+Decisions_; the project tracks individual ADRs in
+`docs/engineering/architecture/decisions/` and the rule governs
+the **shape** those ADRs and inline commitments must take.
+
 ## Exceptions
 
 A transitive dependency installed by a direct dependency is not a

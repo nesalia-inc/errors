@@ -356,3 +356,39 @@ combine, not an inline shape the consumer has to read.
 - **Rule 0003** — File Placement: a single-caller algorithm does
   not need to be extracted yet; this rule says "name it when it has
   a second caller", not "extract every algorithm immediately".
+
+## Sources
+
+The "named algorithms" invariant is anchored in:
+
+- **Merino, Julio.** _Readability: No abbreviations._ jmmv.dev,
+  June 2013. The strictest position on diminutives: spelling
+  words out is a tax the author pays once and the reader pays
+  forever.
+- **Google TypeScript Style Guide.** _Naming._ The calibrated
+  position: abbreviations that are ambiguous or unfamiliar are
+  banned; abbreviations that are standard are kept. The
+  three-category distinction in this rule is Google's distinction
+  made explicit.
+- **Donley, Keegan.** _When Can I Use Abbreviated Variable
+  Names?_ August 2023. The conventional exceptions: `i`, `T`, and
+  standard words have meaning density that long names cannot
+  replicate in their context.
+- **Cox, Russ.** _research!rsc: Names._ February 2010. The
+  information-content framing: a name's length should not exceed
+  its information content.
+
+The "independent data structures" invariant is anchored in:
+
+- **Stepanov, Alexander, and David Musser.** _Algorithm-oriented
+  Generic Libraries._ Software — Practice and Experience,
+  vol. 24(7), July 1994. The canonical source for parameterising
+  algorithms by container access operations. The `Stack<T>`
+  reusable across BFS, DFS, and undo-log is the TypeScript-level
+  restatement of Stepanov's `Sequence<T>` parameterised by
+  iterators.
+- **Stepanov, Alexander.** _Notes on Programming._ A9.com, 2007
+  talk transcript. The deeper point: algorithms are also
+  independent of each other. A walker is a fold; a fold is a
+  traversal. The rule's "algorithms are named" invariant is the
+  project-level restatement.

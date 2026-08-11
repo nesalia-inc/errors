@@ -195,3 +195,14 @@ mechanism.
 - **Rule 0009** — Open Extension, Closed Modification: the discipline
   that keeps the composed layers stable across changes to the
   enumeration.
+
+## Sources
+
+This rule is a synthesis of the project's own working
+experience. The "DX wins" framing draws on common usage in the
+JavaScript ecosystem (the term appears in many libraries'
+contributing guides), but the operational form — the first line
+must say what the function does, the consumer must not have to
+climb into helpers — is not anchored to a single external
+reference. The rule captures a discipline the project has paid
+for in past reviews.

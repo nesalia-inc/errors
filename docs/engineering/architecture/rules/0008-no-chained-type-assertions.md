@@ -243,3 +243,22 @@ that position.
   discipline this rule relies on. A `type` declaration that
   requires a cast to use is a violation of 0008; the declaration is
   the wrong shape.
+
+## Sources
+
+- **Beluzhenko, Anton.** _Why `as unknown as Type` should be
+  banned._ JavaScript in Plain English, April 2024. The title is
+  the position; the body explains why the pattern abdicates the
+  type system's power.
+- **Edwards, Darryl.** _TypeScript – don't misuse casting._ Code
+  Krispies, June 2024. The categorical "never use this pattern"
+  framing.
+- **Wycliffe, Maina.** _Avoid using Type Assertions in
+  TypeScript._ All Things TypeScript, October 2023. The
+  responsibility-transfer framing: a cast is a contract the
+  reader inherits.
+- **Pizza, Miguel.** _No Defensive Null Checks._ Maintainable
+  TypeScript doctrine. The "trust the type" formulation, which
+  underwrites rule 0004 and is also the slogan of rule 0001,
+  applies equally to casts: a chain of casts is not an
+  assertion, it is a confession.

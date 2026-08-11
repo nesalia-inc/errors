@@ -216,3 +216,12 @@ underlying invariant 7.
 None. The invariants are absolute. A request for an exception is a
 signal that the request should be re-scoped until it no longer
 requires one.
+
+## Sources
+
+- **Pizza, Miguel.** _No Defensive Null Checks._ Maintainable
+  TypeScript doctrine. Cited in rule 0001's trust-the-type epigraph
+  and again in rule 0004 (where the principle is operationalised
+  for runtime guards). The "trust the type" quote is the project's
+  slogan; the rule applies the principle at the level of
+  contributor mindset.

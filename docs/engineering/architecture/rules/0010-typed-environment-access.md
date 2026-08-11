@@ -147,3 +147,14 @@ file is the rule, not the exception.
 unknown as Environment` to construct is a violation of 0008; the
   accessor module is the only file that legitimately narrows the
   ambient `process` shape.
+
+## Sources
+
+This rule is a synthesis of the project's own architectural
+commitments. The pattern of a single typed accessor module is
+common in Node.js backends (NestJS ConfigService, Vite's
+`loadEnv`, Next.js env validation via `@t3-oss/env-nextjs`); the
+project does not adopt any of these libraries directly because
+the rule's discipline is one line of code, not a dependency.
+The rule is the lightweight version of a pattern those libraries
+formalise; the formalisation is left to the rule itself.

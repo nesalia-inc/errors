@@ -164,3 +164,14 @@ author must demonstrate the multiple use sites in the PR.
   the file the rule places read well from top to bottom.
 - **Rule 0011** — Filenames Are kebab-case: the casing discipline
   that complements this rule's placement discipline.
+
+## Sources
+
+This rule is a synthesis of the project's own working
+experience. The discipline of "decide before you create" is
+explicitly drawn from Rule of Three — a heuristic named
+informally in software folklore that an abstraction is
+worth its cost when three concrete cases exist. The rule names
+the heuristic without citing a single reference because the
+heuristic is older than the JavaScript ecosystem and predates
+the project's chosen stack.

@@ -313,3 +313,26 @@ code the project consumes.
   `UserManager` usually lives in a file named `user-manager.ts`,
   which is the right casing. The rule's wrong shape is the class
   name, not the file name.
+
+## Sources
+
+- **Bugayenko, Yegor.** _Don't Create Objects That End With
+  -ER._ March 2015. The philosophical ground: a bare job title
+  is a class that has no entity to be; it is a collection of
+  procedures that the caller orchestrates. The hall-of-shame
+  list (Manager, Controller, Helper, Handler, Writer, Reader,
+  Converter, Validator, Router, Dispatcher, Observer, Listener,
+  Sorter, Encoder, Decoder) is the rule's reference list.
+- **Muc, Scott.** _Manager Suffixes Are a Code Smell._ June 2008.
+  The operational reading: a suffix is a proxy measurement for
+  responsibility count. When the suffix is necessary, the count
+  is high.
+- **lavoie, Charles-H.** _"Service" should be a banned word._
+  Proper Code, June 2019. The quantified cost: six methods,
+  thirty unit tests in one file. The bare suffix makes the cost
+  invisible.
+- **Bogard, Jimmy.** _Domain Command Patterns - Handlers._
+  March 2018. The counter-example: the handler suffix is fine
+  when qualified by the command it handles. The rule does not
+  follow Bogard; the rule follows Bugayenko. The qualifier is
+  the entity; the suffix is the wrapper.

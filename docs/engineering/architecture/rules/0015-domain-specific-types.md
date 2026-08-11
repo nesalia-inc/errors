@@ -346,3 +346,26 @@ of an algorithm are not the boundary.
   the reader") is the philosophical ground. The reader sees a
   domain type at the boundary; the reader does not see a
   primitive that may or may not be the right thing.
+
+## Sources
+
+- **Goldberg, Josh.** _Branded Types._ Learning TypeScript,
+  August 2024. The structural-typing limitation: two strings
+  with the same shape are the same type to the compiler; a
+  brand is what makes them different. The rule's branded-type
+  pattern is Goldberg's pattern.
+- **Ferreira.** _Opaque / Branded Types in TypeScript._ 2022.
+  The time dimension: a primitive bug appears six months later
+  when the consumer has forgotten the convention; a domain type
+  shifts the error to compile time. The rule's "compiletime vs
+  runtime" framing is Ferreira's.
+- **Foth, Kilian.** _Is it OK to have type aliases for primitive
+  types in TypeScript?_ Software Engineering Stack Exchange,
+  accepted answer (22 votes), 2022. The reader's economy: a
+  primitive aliased to a domain type still reads as a primitive
+  to the consumer; the alias adds nothing. The rule picks the
+  shape over the alias.
+- **AIWalker.** Cited from the same SE question: the alias
+  pattern is a soft antipattern when it is purely descriptive
+  (no validation, no discrimination). The rule captures the
+  distinction between alias and brand.

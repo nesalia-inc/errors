@@ -196,3 +196,15 @@ The exceptions are **vocabulary words, not casing choices**:
 The exceptions are listed because a reviewer should know what is
 not subject to the rule. They are not loopholes; they are
 constraints from tools the project depends on.
+
+## Sources
+
+This rule is a synthesis of the project's own working
+experience. The casing choice (kebab-case) is the convention
+the broader JavaScript ecosystem follows (Next.js, Vite, most
+build tools emit kebab-case routes by default); the rule is
+not anchored to a single external reference because the
+convention is universal enough that citing one would imply the
+others are wrong. The case-insensitive-filesystem trap is a
+Git behaviour; the rule documents the failure mode without
+attributing it.

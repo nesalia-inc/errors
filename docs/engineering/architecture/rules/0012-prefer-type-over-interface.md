@@ -245,3 +245,16 @@ declaration that cannot be traced is a violation.
   this rule relies on. A `type` declaration that requires a cast
   to use is a violation of 0008; the declaration is the wrong
   shape.
+
+## Sources
+
+This rule is a synthesis of the project's own working
+experience. The TypeScript documentation itself states that
+`type` and `interface` are largely interchangeable in the cases
+most codebases use them; the rule picks `type` as the default
+because the expressiveness, single-declaration-site, and
+union-friendly characteristics are not duplicated by
+`interface`. The three documented exceptions (declaration
+merging, class implementation of open shapes, host type
+augmentation) are the cases where `interface` is genuinely
+required.

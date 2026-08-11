@@ -131,3 +131,13 @@ violation because the file is named for its operation, not for
   go before I write it".
 - **Rule 0011** — Filenames Are kebab-case: the casing discipline
   that makes a folder of separated files read as one project.
+
+## Sources
+
+This rule is a synthesis of the project's own working
+experience. No external reference anchors it. The shape (one
+file per syntactic kind, per concern) is a JavaScript
+convention; the project's experience is that the convention
+breaks down when cross-concern types accumulate in a shared
+`types.ts`. The rule captures the failure mode before it
+becomes a smell.

@@ -144,3 +144,22 @@ A `switch` over a discriminated union, where the compiler can
 prove exhaustiveness, is a better shape than a registry because the
 compiler can warn if a case is added to the union but not the
 switch. Keep the `switch`; do not turn it into a registry.
+
+## Sources
+
+This rule operationalises the **Open/Closed Principle** as
+articulated in Robert C. Martin's _Designing Object-Oriented
+C++ Applications_ (Prentice Hall, 1995) and later popularised
+through his writings on agile software development. The OCP
+states that software entities should be open for extension but
+closed for modification; in this codebase the rule extends OCP
+to the function level: a function that branches on an
+internally-defined enumeration is closed for modification
+(the dispatcher does not change) and open for extension (a new
+case is a new row in the registry).
+
+The rule is consistent with how framework code in mature
+JavaScript projects handles dispatch tables (e.g. Redux reducers
+shaped as `Record<ActionType, Reducer>`, Vite plugin hooks
+shaped as a registry). The registry pattern is the TypeScript-
+native expression of OCP at the function level.

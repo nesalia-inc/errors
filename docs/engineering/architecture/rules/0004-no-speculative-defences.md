@@ -173,6 +173,76 @@ it is a lie about what can fail.
   number** in a comment that explains the scenario in one sentence.
   The guard and the report form a closed loop.
 
+## The `== null` idiom — when the rule does not apply
+
+The rule forbids speculative defences on non-nullable types. It
+does **not** forbid the `x == null` idiom, which is the canonical
+way to test "the value is absent" at a boundary where the contract
+permits absence.
+
+The JavaScript specification defines loose equality such that
+**only `null` and `undefined` are equal to `null`** in `==`
+comparison. No other falsy value matches:
+
+```ts
+// Only null and undefined match in this idiom.
+console.log(null == null); // true
+console.log(undefined == null); // true
+console.log(0 == null); // false
+console.log('' == null); // false
+console.log(false == null); // false
+```
+
+This makes `== null` a safe idiom for "value is absent". It is
+the **opposite** of a speculative defence: it is the precise check
+for the case the type system says is possible (`string | null |
+undefined`). Banning it would force the same check in two lines:
+
+```ts
+// Bad — the rule does not require this. The above is one line and clearer.
+if (x === null || x === undefined) {
+  /* ... */
+}
+```
+
+The idiom is documented and recommended:
+
+> "Recommend `== null` to check for both `undefined` or `null`. You
+> generally don't want to make a distinction between the two."
+>
+> — Basarat Ali Syed, _TypeScript book_, 2024 edition.
+
+> "We intentionally allow this [comparison against null on
+> non-nullable types] for the sake of defensive programming (i.e.
+> defending against missing inputs from non-TS code). If there's
+> enough demand we could add a flag or something."
+>
+> — Ryan Cavanaugh, TypeScript core team, GitHub
+> microsoft/TypeScript#11920, October 2016 (issue still open in
+> 2025).
+
+The Microsoft team has explicitly **declined** to warn on null
+comparisons even on non-nullable types, because the check is
+legitimate at the JavaScript boundary. Banning `== null` in this
+project would diverge from both the JavaScript standard and the
+TypeScript team's official position.
+
+### When to use `===` instead
+
+`=== null` or `=== undefined` are appropriate when the contract
+**explicitly distinguishes** null from undefined. That happens in
+two cases:
+
+- **Initialised vs uninitialised.** A variable that starts as
+  `undefined` and is later assigned `null` to mean "explicitly
+  cleared" benefits from `=== null` (or `=== undefined`) to
+  distinguish the two states.
+- **Public API contract.** A library that exposes a parameter
+  accepting `null | undefined` as two distinct values may need to
+  distinguish them at the boundary.
+
+In every other case, `== null` is the right idiom.
+
 ## Exceptions
 
 A documented, scenario-named guard against an input that crosses a
@@ -244,6 +314,43 @@ The four sources converge on the same operational rule: guards
 belong at the boundary between trusted and untrusted; inside
 the trust boundary, the type system is the defence. This rule is
 the operational form of that position.
+
+## Sources
+
+- **Pizza, Miguel.** _No Defensive Null Checks._ Maintainable
+  TypeScript doctrine. Operationalises the trust-the-type principle
+  for runtime guards: the rule's title and core position are
+  Pizza's.
+- **Basarat Ali Syed.** _TypeScript book_, chapter on null and
+  undefined. The `== null` idiom is documented and recommended;
+  Basarat's position is that the loose-equality check is the
+  precise tool for "value is absent" and is not the kind of
+  speculative defence the rule forbids.
+- **Kale, Aziz.** _Why Senior Developers Rarely Need `if (x ==
+null)`._ Dev Genius, July 2026. The reframe — "why was this value
+  allowed to be null in the first place?" — is captured in the
+  rule's question 0.
+- **Pizza again.** Cited for the operational form: "if the type
+  says it's not null, trust the type. If the type is wrong, fix
+  the type."
+- **Wycliffe, Maina.** _Avoid using Type Assertions in
+  TypeScript._ All Things TypeScript, October 2023. The
+  responsibility-transfer framing ("we are now responsible for this
+  type") informs the rule's "a guard whose origin cannot be named
+  is a guard that does not belong".
+- **Khorikov, Vladimir.** _Defensive programming: the good, the bad
+  and the ugly._ Enterprise Craftsmanship. The repetition smell —
+  five guards across five methods are one domain invariant expressed
+  five times — informs the rule's structural critique.
+- **Bird, Jim.** _Defensive Programming: Being Just-Enough
+  Paranoid._ Building Real Software, March 2012. The cautionary
+  tale — a system saturated with guards becomes unmaintainable —
+  anchors the rule's trust-boundary principle.
+- **Microsoft TypeScript team, Ryan Cavanaugh.**
+  microsoft/TypeScript#11920, October 2016 (open as of 2025).
+  The compiler intentionally allows null comparisons on non-nullable
+  types; the rule operationalises this by carving out the
+  trust-boundary exception.
 
 ## See also
 
