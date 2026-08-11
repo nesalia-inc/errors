@@ -5,6 +5,23 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 // ============================================================================
+// Internal markers
+// ============================================================================
+
+/**
+ * Symbol used to identify factory-created errors.
+ * Stored on the error instance to enable reliable instanceof checks.
+ *
+ * The symbol is shared across the package (registered in the global
+ * Symbol registry) so that two copies of the package — or two
+ * realms — agree on the marker. The runtime check in `is()` is
+ * keyed by this symbol.
+ *
+ * @internal
+ */
+export const FACTORY_SYMBOL: unique symbol = Symbol.for('@deessejs/errors/factory');
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -81,6 +98,14 @@ export type ErrorInstance<TFields extends Record<string, unknown> = Record<strin
     context: Record<string, unknown> | null;
     /** Parent error factories for type checking */
     inherits?: ErrorFactory | ErrorFactory[];
+    /**
+     * Marker pointing back to the factory that produced this instance.
+     * Set by `error()` at construction time; read by `is()` to
+     * discriminate factory-created errors.
+     *
+     * @internal
+     */
+    [FACTORY_SYMBOL]: ErrorFactory<TFields>;
   };
 
 /**

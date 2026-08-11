@@ -84,6 +84,20 @@ describe('error() factory function', () => {
 
       expect(instance.inherits).toBe(ParentError);
     });
+
+    it('should attach the factory marker without a chained cast', () => {
+      const TestError = error({ name: 'TestError' });
+      const instance = TestError();
+
+      // The marker is a typed property on ErrorInstance<T> (no
+      // `as unknown` cast at the call site). It points back to the
+      // factory that produced the instance, and `is()` reads it.
+      // Regression for issue #71.
+      const FACTORY_SYMBOL = Symbol.for('@deessejs/errors/factory');
+      const marker = (instance as unknown as Record<symbol, unknown>)[FACTORY_SYMBOL];
+
+      expect(marker).toBe(TestError);
+    });
   });
 
   describe('.addNote()', () => {

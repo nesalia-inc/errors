@@ -7,20 +7,9 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import type { ErrorFactory, ErrorInstance } from './types.js';
+import { FACTORY_SYMBOL } from './types.js';
 import { captureStack } from './capture.js';
 import { formatTemplate, hasTemplatePlaceholders } from './format.js';
-
-// ============================================================================
-// Symbols for identity
-// ============================================================================
-
-/**
- * Symbol used to identify factory-created errors.
- * Stored on the error instance to enable reliable instanceof checks.
- *
- * @internal
- */
-const FACTORY_SYMBOL = Symbol.for('@deessejs/errors/factory');
 
 // ============================================================================
 // Error Factory
@@ -125,10 +114,10 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
       return instance;
     };
 
-    // Mark this instance as created by this factory (for is() checks)
-    // Use callable to avoid generic parameter conflicts
-    (instance as unknown as Record<typeof FACTORY_SYMBOL, () => unknown>)[FACTORY_SYMBOL] =
-      ErrorFactoryInstance;
+    // Mark this instance as created by this factory (for is() checks).
+    // The marker is declared on ErrorInstance<T> in types.ts, so the
+    // assignment is type-checked without an `as unknown` cast.
+    instance[FACTORY_SYMBOL] = ErrorFactoryInstance;
 
     return instance;
   };
@@ -155,9 +144,3 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
 
   return ErrorFactoryInstance as ErrorFactory<T>;
 };
-
-// ============================================================================
-// Exports for is() function
-// ============================================================================
-
-export { FACTORY_SYMBOL };
