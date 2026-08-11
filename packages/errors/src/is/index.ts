@@ -3,7 +3,7 @@
  */
 
 import type { ErrorFactory, ErrorInstance } from '../error/types.js';
-import { FACTORY_SYMBOL } from '../error/error.js';
+import { FACTORY_SYMBOL } from '../error/types.js';
 
 /**
  * Type to extract the fields from an ErrorFactory or native Error class.
