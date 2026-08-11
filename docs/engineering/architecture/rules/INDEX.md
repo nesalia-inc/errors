@@ -20,6 +20,7 @@ are enforced through CI lint as the harness matures.
 | 0009 | Open Extension, Closed Modification              | A function that branches on an internally-defined enumeration dispatches through a Map or typed table; new values are added by extending the registry.                                   |
 | 0010 | Typed Environment Access                         | `process.env` is read in exactly one file per workspace; the rest of the codebase imports a typed accessor.                                                                              |
 | 0011 | Filenames Are kebab-case                         | Every file in this repository is named in lowercase letters, digits, and hyphens; no camelCase, PascalCase, snake_case.                                                                  |
+| 0012 | Prefer `type` Over `interface`                   | Shapes are declared with `type`; `interface` is reserved for declaration merging, class implementation of open shapes, and host type augmentation.                                   |
 
 ## How to read this folder
 
