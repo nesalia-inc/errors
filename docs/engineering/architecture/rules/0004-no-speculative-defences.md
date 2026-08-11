@@ -86,6 +86,47 @@ guard belongs.
    static analyser warning. Until then, the code path is the
    cleanest expression of the contract you actually have.
 
+**Bad** — guard without a named scenario, swallowing the failure:
+
+```ts
+function discriminate(
+  err: unknown,
+  type: ErrorFactory | (new (...args: unknown[]) => Error)
+): boolean {
+  // Pre-existing narrowing was already in place above this point.
+  if (typeof err === 'object' && err !== null) {
+    // Redefence of a narrowing the compiler already proved.
+  }
+
+  // The code below this comment never sees a cross-realm object.
+  // The catch is a tax paid by every reader.
+  try {
+    return err instanceof type;
+  } catch {
+    // "instanceof can fail for cross-realm errors" — but they never arrive here.
+  }
+  // ...
+}
+```
+
+**Good** — trust the narrowing; if the cross-realm scenario ever
+appears, add the guard with a comment that references the bug:
+
+```ts
+function discriminate(
+  err: unknown,
+  type: ErrorFactory | (new (...args: unknown[]) => Error)
+): boolean {
+  if (typeof type === 'function' && 'prototype' in type) {
+    // No try/catch. instanceof against a class never throws on its own
+    // in the contexts this function is called from. If a cross-realm
+    // scenario is reported, add the guard with the bug number.
+    return err instanceof type;
+  }
+  // ...
+}
+```
+
 ## What this looks like in violation
 
 A function declared with `err: unknown` that, three statements later,

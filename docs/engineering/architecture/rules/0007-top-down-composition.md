@@ -187,3 +187,11 @@ shared primitive module are not subject to top-down reading. They
 are read by the consumer's eye at the layer above; their own
 internal style may be bottom-up because their job is to be
 mechanism.
+
+## See also
+
+- **Rule 0005** — Named Algorithms and Independent Data Structures:
+  this rule composes the named algorithms that 0005 extracts.
+- **Rule 0009** — Open Extension, Closed Modification: the discipline
+  that keeps the composed layers stable across changes to the
+  enumeration.

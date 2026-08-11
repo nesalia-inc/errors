@@ -98,6 +98,94 @@ guidelines; they are the floor.
   the contributor have different standards, and the project's
   standard is the one that ships.
 
+## Examples
+
+Three invariants illustrated as bad/good pairs. The patterns are
+generic; they apply to any code that takes the same shape.
+
+**Invariant 1 (no shortcut) — the lie of a cast:**
+
+```ts
+// Bad: bypasses the type system because the author did not want to
+// model the actual shape.
+function loadConfig(path: string): Config {
+  const raw = readFile(path) as any;
+  return raw as Config;
+}
+
+// Good: the author learned what the file actually contains and
+// modelled it. If the file is malformed, the function says so.
+function loadConfig(path: string): Config {
+  const raw = readJson(path);
+  if (!isConfig(raw)) {
+    throw new InvalidConfigError(path, raw);
+  }
+  return raw;
+}
+```
+
+**Invariant 5 (no `any`) — escape hatches are modelling failures:**
+
+```ts
+// Bad: the author could not express the union, so they shut their eyes.
+function handle(event: any) {
+  if (event.type === 'click') {
+    /* ... */
+  }
+}
+
+// Good: the discriminated union models the truth. The compiler proves
+// every branch is handled.
+type Event = { type: 'click'; position: Position } | { type: 'key'; key: string };
+
+function handle(event: Event) {
+  switch (event.type) {
+    case 'click':
+      return; /* ... */
+    case 'key':
+      return; /* ... */
+  }
+}
+```
+
+**Invariant 6 (no silent failures) — the `catch` that lies:**
+
+```ts
+// Bad: the author wrapped the call to be safe and caught "in case".
+// Failures vanish. The user never learns.
+try {
+  await sync();
+} catch {
+  /* nothing */
+}
+
+// Good: either re-raise with context, transform into a domain error,
+// or log through a structured channel. Never silently.
+try {
+  await sync();
+} catch (cause) {
+  throw new SyncError('sync failed', { cause });
+}
+```
+
+The remaining invariants are expanded in their dedicated rules:
+see rule 0004 for invariants 4 and 7 (no speculative defences, no
+compiler bypass) and rule 0008 for the type-side discipline
+underlying invariant 7.
+
+## See also
+
+- **Rule 0002** — File Separation: the structure this mindset expects.
+- **Rule 0003** — File Placement: the discipline that turns the
+  mindset into a code-shape decision.
+- **Rule 0004** — No Speculative Defences: invariant 4 (no
+  speculative abstractions) and invariant 7 (no compiler bypass)
+  in operational form.
+- **Rule 0007** — Top-Down Composition: the discipline that puts
+  the reader first.
+- **Rule 0008** — No Chained Type Assertions: the type-side
+  application of invariant 7.
+
 ## Exceptions
 
 None. The invariants are absolute. A request for an exception is a

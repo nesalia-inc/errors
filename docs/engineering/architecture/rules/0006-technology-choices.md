@@ -136,6 +136,41 @@ project started before strict mode was the default. The assumption
 chosen. It becomes a wall every time a contributor wants to enable a
 strict-mode feature.
 
+**Bad** — a choice without a justification:
+
+```ts
+// In a PR description
+'Added zod to validate the user signup payload.';
+```
+
+The reviewer reads this and has no way to evaluate the choice. Is
+the standard library not enough? Is Standard Schema acceptable? Why
+zod and not Valibot or ArkType? The reviewer is forced to either
+trust the author or block the PR to ask.
+
+**Good** — the four questions answered in the PR description:
+
+```md
+## Why zod
+
+- **What is the choice?** zod as the runtime validator for user
+  signup payloads, used via the Standard Schema adapter (not the
+  zod-native API).
+- **What does it enable?** Inference of `UserSignup` types directly
+  from the schema, ergonomic error messages, and Standard Schema
+  compliance that lets consumers swap validators later.
+- **What does it rule out?** A direct dependency on zod's API. We
+  use Standard Schema as the contract; if a future user prefers
+  Valibot, the change is local to the validator factory.
+- **When would we revisit?** If the package's release cadence slows
+  below our SLA, or if a security advisory lands and is not
+  resolved within 30 days.
+```
+
+The reviewer can now evaluate the choice against alternatives. The
+next contributor who looks for "why zod?" finds the answer in the
+git log.
+
 ## Enforcement
 
 - **PR review**. A reviewer who sees a new dependency, a new build

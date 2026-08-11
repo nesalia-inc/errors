@@ -137,6 +137,38 @@ filesystem sees them as the same. The merge conflict appears only
 when someone tries to checkout on Linux. The fix is to enforce
 kebab-case at the rule level so the trap is impossible to enter.
 
+**Bad** — three folders, three conventions, same project:
+
+```
+src/
+├── errorFactory/        # camelCase
+│   └── index.ts
+├── ErrorHandler/        # PascalCase
+│   └── index.ts
+└── http_client/         # snake_case
+    └── index.ts
+```
+
+A grep for `error` returns hits in three different cases. A file
+listing reads as three unrelated projects. The reader's mental model
+has to track which casing means which.
+
+**Good** — one folder per concern, kebab-case throughout:
+
+```
+src/
+├── error-factory/       # kebab-case
+│   └── index.ts
+├── error-handler/       # kebab-case
+│   └── index.ts
+└── http-client/         # kebab-case
+    └── index.ts
+```
+
+A grep for `error` returns hits in one case. A file listing reads
+as one project. The reader's mental model is uniform; the casing
+does not need to be learned.
+
 ## Enforcement
 
 - **Code review**. A reviewer who sees a non-kebab-case filename

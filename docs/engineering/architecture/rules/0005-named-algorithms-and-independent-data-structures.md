@@ -206,3 +206,12 @@ deserve a name does not need one.
   fine; `i` in a fifty-line function is not.
 - Generated code, vendor code, and bindings to external systems
   where the shape is fixed by the other side.
+
+## See also
+
+- **Rule 0007** — Top-Down Composition: the discipline that puts
+  the named algorithms this rule produces at the top of their
+  callers. This rule extracts; 0007 composes.
+- **Rule 0009** — Open Extension, Closed Modification: the discipline
+  that turns the named data structures (Stack, Queue, etc.) into
+  reusable registries.

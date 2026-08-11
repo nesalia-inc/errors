@@ -136,3 +136,14 @@ The refactor is mechanical and reviewable in one PR.
 A file that **defines** the accessor (the file the rule says is the
 only place `process.env` is read) is allowed to access it. That
 file is the rule, not the exception.
+
+## See also
+
+- **Rule 0006** — Technology Choices: the rule that motivates
+  avoiding `@types/node` as a runtime dependency. This rule is the
+  operational form of "minimal dependencies, typed boundaries".
+- **Rule 0008** — No Chained Type Assertions: the type discipline
+  this rule relies on. A typed accessor that required an `as
+unknown as Environment` to construct is a violation of 0008; the
+  accessor module is the only file that legitimately narrows the
+  ambient `process` shape.

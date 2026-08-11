@@ -61,10 +61,38 @@ A concern folder that **violates** the rule looks like one of these:
 
 - **Single mega file**: `validation/index.ts` contains the type, the
   constants, and every function. Hard to skim, hard to refactor.
+
+  ```ts
+  // validation/index.ts — every concern in one file
+  export interface ValidationRule {
+    /* ... */
+  }
+  export const DEFAULT_RULES: ValidationRule[] = [/* ... */];
+  export function validate(input: unknown): Result {
+    /* 200 lines */
+  }
+  export function formatErrors(errors: Error[]): string {
+    /* ... */
+  }
+  ```
+
 - **Syntax-based split**: `types/types.ts` holding every type from
   every concern, `constants/constants.ts` holding every constant.
   Encourages cross-cutting imports, defeats tree-shaking, signals
   "we don't know our own domain boundaries".
+
+  ```ts
+  // types/types.ts — every type in the project
+  export interface ValidationRule {
+    /* ... */
+  }
+  export interface UserProfile {
+    /* unrelated concern */
+  }
+  export interface InvoiceLine {
+    /* unrelated concern */
+  }
+  ```
 
 ## What about generic helpers?
 
@@ -94,3 +122,12 @@ helper that lives next to its single caller may stay in the same
 file (e.g. an internal helper inside `validator.ts`); this is not a
 violation because the file is named for its operation, not for
 "helpers".
+
+## See also
+
+- **Rule 0003** — File Placement: the decision rule that picks the
+  home for a file once the concern is identified. This rule says
+  "no cross-concern `types.ts`"; 0003 says "where does this new file
+  go before I write it".
+- **Rule 0011** — Filenames Are kebab-case: the casing discipline
+  that makes a folder of separated files read as one project.

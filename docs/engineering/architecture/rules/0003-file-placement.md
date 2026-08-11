@@ -104,6 +104,36 @@ They were not useful elsewhere; they never will be. The author
 anticipated reuse that did not come. The right shape would have been
 to keep each helper inside its sole caller's concern folder.
 
+```ts
+// report/formatter.ts — the helper that should never have moved
+import { formatIsoDate } from '../utils/date.js';
+
+export function formatReport(event: ReportEvent): string {
+  // ...uses formatIsoDate exactly once...
+}
+```
+
+The `formatIsoDate` import tells the reader the formatter depends on
+a shared utility. But there is no second caller. The "shared"
+utility is a single-caller helper dressed up as cross-cutting. The
+right shape:
+
+```ts
+// report/formatter.ts — the helper lives with its caller
+export function formatReport(event: ReportEvent): string {
+  const formattedDate = formatIsoDate(event.occurredAt);
+  // ...
+}
+
+function formatIsoDate(input: Date): string {
+  return input.toISOString().slice(0, 10);
+}
+```
+
+The reader sees the helper and its caller in the same file. When a
+second concern genuinely needs the same formatter, the move to a
+shared location is justified by the second use site.
+
 ## Enforcement
 
 - **Code review**. A reviewer who sees a new file under a
@@ -124,3 +154,13 @@ guard, or a date format shared by logs, reports, and tests — lives in
 a top-level module. The module's name must describe what it does
 (`assert-never.ts`, `iso-date.ts`), not what it is (`utils.ts`). The
 author must demonstrate the multiple use sites in the PR.
+
+## See also
+
+- **Rule 0002** — File Separation: the per-concern split this rule
+  assumes. This rule says "where does the file go"; 0002 says "what
+  kinds of files exist in a concern".
+- **Rule 0007** — Top-Down Composition: the discipline that makes
+  the file the rule places read well from top to bottom.
+- **Rule 0011** — Filenames Are kebab-case: the casing discipline
+  that complements this rule's placement discipline.
