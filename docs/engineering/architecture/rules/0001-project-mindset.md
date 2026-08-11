@@ -53,7 +53,10 @@ guidelines; they are the floor.
 4. **No speculative abstractions.** An abstraction added "in case"
    is a wall the next contributor will have to climb. Abstract only
    when three concrete cases exist (Rule of Three). Until then, the
-   duplication is cheaper than the abstraction.
+   duplication is cheaper than the abstraction. _The threshold for
+   extracting an abstraction (three) differs from the threshold for
+   moving a single file (two distinct concerns); see rule 0003 for
+   the file-level decision._
 
 5. **No `any`.** `unknown` is the safe escape hatch. If a type cannot
    be expressed, model it explicitly — through a schema, a discriminated
@@ -202,7 +205,10 @@ underlying invariant 7.
 
 - **Rule 0002** — File Separation: the structure this mindset expects.
 - **Rule 0003** — File Placement: the discipline that turns the
-  mindset into a code-shape decision.
+  mindset into a code-shape decision. The Rule of Three named in
+  invariant 4 above is the _abstraction_ threshold; rule 0003
+  applies a _second-concern_ threshold for file relocation — the
+  two are different decisions with different evidence.
 - **Rule 0004** — No Speculative Defences: invariant 4 (no
   speculative abstractions) and invariant 7 (no compiler bypass)
   in operational form.

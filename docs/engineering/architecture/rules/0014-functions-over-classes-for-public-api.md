@@ -336,6 +336,14 @@ the host; the augmentation is `interface`, not `class`.
 
 ## See also
 
+- **Rule 0012** — Prefer `type` Over `interface`: rule 0012
+  carves out `interface` for declaration merging, open-shape
+  class implementation, and host augmentation. When rule 0012
+  permits an `interface` because a class implements an open
+  shape (the "library extension point" pattern), that class is
+  internal per this rule; the public contract is the `interface`,
+  the public constructor is the factory function, the class is
+  behind the boundary.
 - **Rule 0013** — Entity-First Naming: the factory function is
   the natural name for the **action** that produces the entity
   (`group`, `createGroup`, `cancelOrder`). The class is the

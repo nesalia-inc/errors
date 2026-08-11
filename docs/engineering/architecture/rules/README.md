@@ -11,8 +11,8 @@ Each rule is stored as a Markdown file with the naming convention
 `NNNN-short-slug.md`, where `NNNN` is a monotonically increasing
 4-digit sequence. For example:
 
-- `0001-typescript-strict-mode-required.md`
-- `0002-no-runtime-any-leakage.md`
+- `0001-project-mindset.md`
+- `0002-file-separation.md`
 
 The sequence numbers are **never reused**. When a rule is rescinded,
 the file is moved to `_superseded/` with a `Superseded by NNNN`
@@ -48,9 +48,14 @@ Each rule should have:
 3. **Enforcement** — CI check, lint rule, or review-only.
 4. **Exceptions** — if any, with the rationale for each.
 
-Rules must be short. If a rule needs more than a page, it is probably
-a process document, not a rule — file it under
-`docs/internal/engineering/process/` instead.
+Rules are focused, but their length follows the doctrine they
+encode, not the other way around. A rule that names a heuristic,
+cites its sources, and walks through the violation it catches may
+be long; the length is the cost of being unambiguous. A rule that
+has grown past what the doctrine needs is a refactor candidate.
+Process documents (release runbook, PR authoring guide) live under
+`docs/internal/engineering/process/`; the boundary is the **purpose**
+of the document, not its length.
 
 ## Active rules
 

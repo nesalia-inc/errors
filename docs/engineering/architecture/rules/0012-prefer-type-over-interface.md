@@ -245,6 +245,13 @@ declaration that cannot be traced is a violation.
   this rule relies on. A `type` declaration that requires a cast
   to use is a violation of 0008; the declaration is the wrong
   shape.
+- **Rule 0014** — Functions Over Classes for Public API: the
+  exception 2 above ("a class implements the shape and the shape
+  has no runtime behaviour") describes a class that _implements_
+  an `interface`; that class must remain non-exported per rule 0014. The public shape is the interface; the class is the
+  internal implementer. The two rules cooperate: 0012 picks
+  `interface` for the extension point, 0014 hides the class that
+  implements it.
 
 ## Sources
 

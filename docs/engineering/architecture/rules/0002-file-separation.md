@@ -128,7 +128,9 @@ violation because the file is named for its operation, not for
 - **Rule 0003** — File Placement: the decision rule that picks the
   home for a file once the concern is identified. This rule says
   "no cross-concern `types.ts`"; 0003 says "where does this new file
-  go before I write it".
+  go before I write it" and consolidates the codebase's three
+  extraction thresholds (one-caller inline, two-concern move,
+  three-case abstraction).
 - **Rule 0011** — Filenames Are kebab-case: the casing discipline
   that makes a folder of separated files read as one project.
 

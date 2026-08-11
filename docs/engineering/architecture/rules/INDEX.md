@@ -17,26 +17,26 @@ operating principle behind every invariant; rule 0004
 operationalises it for runtime guards. The remaining rules
 inherit from it.
 
-## The eleven rules at a glance
+## The sixteen rules at a glance
 
-| #    | Rule                                             | One-sentence summary                                                                                                                                                                     |
-| ---- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0001 | Project Mindset                                  | Every contribution must be made as if it were the last commit before the project reached its largest possible audience; ten absolute invariants, no exceptions.                          |
-| 0002 | File Separation                                  | Within a concern, types/constants/functions split into their own files; across concerns, no shared barrel that re-exports types or helpers.                                              |
-| 0003 | File Placement                                   | Decide where a new file lives before creating it; a single-caller helper stays next to its caller, extraction requires a second real use site.                                           |
-| 0004 | No Speculative Defences                          | A runtime guard exists to handle a demonstrated scenario; "just in case" guards are a tax on every reader.                                                                               |
-| 0005 | Named Algorithms and Independent Data Structures | Algorithms live as named functions, not inline comments; no diminutives; data structures are independent of the algorithm that first used them.                                          |
-| 0006 | Technology Choices                               | Every language mode, module system, validator, and dependency is a deliberate assumption; each must answer four questions (what, enables, rules out, revisits).                          |
-| 0007 | Top-Down Composition                             | A function reads top-down; the first line tells the reader what it does, every subsequent step is a name the consumer follows; DX wins over internal cleverness.                         |
-| 0008 | No Chained Type Assertions                       | `as X as Y` and `as unknown as Y` are forbidden; a single assertion crossing one boundary is allowed; the fix for a chain is a runtime guard or a better source type, not a longer cast. |
-| 0009 | Open Extension, Closed Modification              | A function that branches on an internally-defined enumeration dispatches through a Map or typed table; new values are added by extending the registry.                                   |
-| 0010 | Typed Environment Access                         | `process.env` is read in exactly one file per workspace; the rest of the codebase imports a typed accessor.                                                                              |
-| 0011 | Filenames Are kebab-case                         | Every file in this repository is named in lowercase letters, digits, and hyphens; no camelCase, PascalCase, snake_case.                                                                  |
-| 0012 | Prefer `type` Over `interface`                   | Shapes are declared with `type`; `interface` is reserved for declaration merging, class implementation of open shapes, and host type augmentation.                                       |
-| 0013 | Entity-First Naming                              | Any name that ends in `-er` (`Manager`, `Service`, `Handler`, `CancelOrderHandler`) is refused; only entity names (`OrderCancellation`) are accepted.                                    |
-| 0014 | Functions Over Classes for Public API            | Classes are internal implementation details; the public API exports factory functions (`group()`, `createGroup()`), never `new ClassName()`.                                             |
-| 0015 | Domain-Specific Types Over Primitives            | A `Message` is a `Message` (with `content`, `type`, …), not a bare `string`; an `Id` is a branded type, not a bare `string`. Primitives cross boundaries only at conversion functions.   |
-| 0016 | No Generic Verbs                                 | A function's verb must encode the transformation (`decode`, `parse`, `validate`) and the return type must encode the result; `process`, `convert`, `handle`, `do` are refused.           |
+| #    | Rule                                             | One-sentence summary                                                                                                                                                                                                                                           |
+| ---- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0001 | Project Mindset                                  | Every contribution must be made as if it were the last commit before the project reached its largest possible audience; ten absolute invariants, no exceptions.                                                                                                |
+| 0002 | File Separation                                  | Within a concern, types/constants/functions split into their own files; across concerns, no shared barrel that re-exports types or helpers.                                                                                                                    |
+| 0003 | File Placement                                   | Decide where a new file lives before creating it; a single-caller helper stays next to its caller, extraction requires a second real use site.                                                                                                                 |
+| 0004 | No Speculative Defences                          | A runtime guard exists to handle a demonstrated scenario; "just in case" guards are a tax on every reader.                                                                                                                                                     |
+| 0005 | Named Algorithms and Independent Data Structures | Algorithms live as named functions, not inline comments; no diminutives; data structures are independent of the algorithm that first used them.                                                                                                                |
+| 0006 | Technology Choices                               | Every language mode, module system, validator, and dependency is a deliberate assumption; each must answer four questions (what, enables, rules out, revisits).                                                                                                |
+| 0007 | Top-Down Composition                             | A function reads top-down; the first line tells the reader what it does, every subsequent step is a name the consumer follows; DX wins over internal cleverness.                                                                                               |
+| 0008 | No Chained Type Assertions                       | `as X as Y` and `as unknown as Y` are forbidden; a single assertion crossing one boundary is allowed; the fix for a chain is a runtime guard or a better source type, not a longer cast.                                                                       |
+| 0009 | Open Extension, Closed Modification              | A function that branches on an internally-defined enumeration dispatches through a Map or typed table; new values are added by extending the registry.                                                                                                         |
+| 0010 | Typed Environment Access                         | `process.env` is read in exactly one file per workspace; the rest of the codebase imports a typed accessor.                                                                                                                                                    |
+| 0011 | Filenames Are kebab-case                         | Every file in this repository is named in lowercase letters, digits, and hyphens; no camelCase, PascalCase, snake_case.                                                                                                                                        |
+| 0012 | Prefer `type` Over `interface`                   | Shapes are declared with `type`; `interface` is reserved for declaration merging, class implementation of open shapes, and host type augmentation.                                                                                                             |
+| 0013 | Entity-First Naming                              | Any name that ends in `-er` (`Manager`, `Service`, `Handler`, `CancelOrderHandler`) is refused; only entity names (`OrderCancellation`) are accepted.                                                                                                          |
+| 0014 | Functions Over Classes for Public API            | Classes are internal implementation details; the public API exports factory functions (`group()`, `createGroup()`), never `new ClassName()`.                                                                                                                   |
+| 0015 | Domain-Specific Types Over Primitives            | A `Message` is a `Message` (with `content`, `type`, …), not a bare `string`; a domain identifier is branded only when a second identifier of the same primitive would otherwise be confused with it. Primitives cross boundaries only at conversion functions. |
+| 0016 | No Generic Verbs                                 | A function's verb must encode the transformation (`decode`, `parse`, `validate`) and the return type must encode the result; `process`, `convert`, `handle`, `do` are refused.                                                                                 |
 
 ## How to read this folder
 
@@ -83,9 +83,9 @@ The format and lifecycle are documented in this folder's
 
 ## Status lifecycle
 
-| Status                 | Meaning                                                                          |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| **Active**             | Currently enforced. Every PR must respect this rule.                             |
-| **Enforced via CI**    | The rule is checked mechanically on every PR.                                    |
-| **Superseded by NNNN** | Replaced by a later rule; the old rule is kept for context and cross-references. |
-| **Deprecated**         | Kept on disk for context but no longer required.                                 |
+| Status                 | Meaning                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| **Active**             | Currently enforced. Every PR must respect this rule.                                       |
+| **Enforced via CI**    | The rule is checked mechanically on every PR. _(Target state — no rule has migrated yet.)_ |
+| **Superseded by NNNN** | Replaced by a later rule; the old rule is kept for context and cross-references.           |
+| **Deprecated**         | Kept on disk for context but no longer required.                                           |

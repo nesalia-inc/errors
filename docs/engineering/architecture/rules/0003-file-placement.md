@@ -64,6 +64,26 @@ this file belongs at all.
    A file named `date-formatter.ts`, `assert-never.ts`,
    `http-status.ts` describes its purpose and ages well.
 
+### Thresholds at a glance
+
+The codebase applies three different thresholds to three different
+decisions. The thresholds are not interchangeable; each answers a
+specific question.
+
+| Decision                                          | Threshold           | Evidence required                                |
+| ------------------------------------------------- | ------------------- | ------------------------------------------------ |
+| Keep a helper inline with its single caller       | 1 caller            | The helper has no second consumer yet.           |
+| Move a file to a shared location across concerns  | 2 distinct concerns | A second concern already needs the file.         |
+| Introduce a generic abstraction (named algorithm) | 3 concrete cases    | The abstraction has paid for itself three times. |
+
+The first row is the file-level default (rule 0005). The second row
+is this rule's question 2. The third row is the _Rule of Three_
+named in rule 0001 (invariant 4). A reader applying the
+"second-caller" threshold of this rule to a _generic abstraction_
+is using the wrong number; a reader applying the "three-cases"
+threshold to a _file move_ is being over-cautious and accumulating
+duplication the codebase has already paid for.
+
 ## When extraction is appropriate
 
 A function moves to a shared location when:
@@ -157,9 +177,18 @@ author must demonstrate the multiple use sites in the PR.
 
 ## See also
 
+- **Rule 0001** — Project Mindset: invariant 4 names the _Rule of
+  Three_ (abstraction = three cases) as a sibling threshold. The
+  "second use site" of this rule is the _file-level_ threshold; the
+  "three cases" of 0001 is the _abstraction-level_ threshold. The
+  two coexist by design.
 - **Rule 0002** — File Separation: the per-concern split this rule
   assumes. This rule says "where does the file go"; 0002 says "what
   kinds of files exist in a concern".
+- **Rule 0005** — Named Algorithms and Independent Data Structures:
+  the rule that captures the _one-caller_ default for helpers
+  (single-caller algorithm stays inline; see the "When this rule
+  does not apply" section of 0005).
 - **Rule 0007** — Top-Down Composition: the discipline that makes
   the file the rule places read well from top to bottom.
 - **Rule 0011** — Filenames Are kebab-case: the casing discipline

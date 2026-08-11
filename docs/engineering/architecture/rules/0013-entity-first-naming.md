@@ -114,6 +114,7 @@ The right shape:
 
 ```ts
 // The name describes what the thing is.
+// The class stays internal — see rule 0014.
 class OrderCancellation {
   cancel(command: CancelOrderCommand): CancellationResult {
     /* ... */
@@ -125,7 +126,12 @@ type OrderCancellation = (command: CancelOrderCommand) => CancellationResult;
 ```
 
 The class is the **thing**; the method is the **operation on the
-thing**. The reader does not need to know who is using it.
+thing**. The reader does not need to know who is using it. _The
+class above is internal; rule 0014 forbids exporting it. The
+public shape is a factory function (`createOrderCancellation`)
+or, more often, a type alias and a free function. The example
+here shows the naming pattern; rule 0014 shows the public-API
+pattern._
 
 ## When the rule does not apply
 

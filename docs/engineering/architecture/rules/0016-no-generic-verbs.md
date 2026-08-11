@@ -18,11 +18,18 @@ A function name's verb must answer three questions:
    a specific algorithm.)
 
 The verbs `parse`, `convert`, `validate`, `transform`, `handle`,
-`process`, `do`, `make`, `perform`, `manage`, `run`, `execute`
+`process`, `do`, `make`, `perform`, `manage`
 fail at least one of the three questions. They are **generic
 verbs**: they say "I do something" without saying what. The rule
 refuses them as the verb of a function name when a more specific
 verb is available.
+
+The verbs `run` and `execute` sit in a different category. They
+_can_ be specific when the function's contract is the orchestration
+itself (see "When the rule does not apply" below: `runPipeline`,
+`executeSteps`). They are excluded from the generic-verb blacklist
+on that basis; the exception below is the canonical place to
+evaluate them.
 
 When no specific verb is available, the rule says: **do not
 write the function**. A function whose verb is `process` is a
@@ -147,7 +154,13 @@ sending` is fine in a comment; the comment does not have to
 - **Truly generic operations** — a function whose job is genuinely
   "do several things in order" may be named `runPipeline` or
   `executeSteps` if the steps are not the function's contract;
-  the function delegates to named helpers.
+  the function delegates to named helpers. _This is why `run`
+  and `execute` are not in the blacklist at the top of the
+  rule: the orchestrator's contract is the order of the steps,
+  and the verb names the order. A function called `run` (or
+  `execute`) on a single step is back in the violation case
+  above; a function called `runPipeline` is the legitimate
+  shape._
 
 ## What senior practitioners say
 

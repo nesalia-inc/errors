@@ -101,6 +101,25 @@ A Node-API integration that genuinely needs runtime global
 detection) is allowed, but the read happens inside a small typed
 module and the rest of the codebase imports the typed accessor.
 
+## Why the values stay primitives (rule 0015 carve-out)
+
+The `Environment` type in the example above declares
+`API_KEY?: string` — a primitive. Rule 0015 says a value that
+represents a domain concept should be typed as a domain-specific
+type, not a primitive. The carve-out is intentional: environment
+values are **runtime configuration**, not domain concepts. A
+`Message` is a `Message` because the application reasons about
+messages; an `API_KEY` is an opaque string the application passes
+to a third party. Wrapping `API_KEY` in a branded type would
+add ceremony without information — there is no second
+`API_KEY`-shaped value in the codebase that the brand would
+prevent the consumer from confusing it with.
+
+The carve-out has a sharp boundary: the moment a value crosses
+the typed accessor and enters the domain, it must be converted
+to the domain type (rule 0015). The accessor is the only place
+where the primitive is allowed to live.
+
 ## How to refactor a scattered read
 
 When you find `process.env` references in business code:
@@ -147,6 +166,12 @@ file is the rule, not the exception.
 unknown as Environment` to construct is a violation of 0008; the
   accessor module is the only file that legitimately narrows the
   ambient `process` shape.
+- **Rule 0015** — Domain-Specific Types Over Primitives: rule
+  0015 requires domain concepts to be domain types. Environment
+  values are configuration, not domain concepts — they remain
+  primitives inside the accessor (see "Why the values stay
+  primitives" above). The moment a value crosses the accessor
+  and enters the domain, rule 0015 applies in full.
 
 ## Sources
 
