@@ -13,27 +13,27 @@ suffixes `Manager`, `Service`, `Handler`, `Controller`, `Helper`,
 **does for the caller** rather than what the thing **is** —
 are refused as standalone names.
 
-The rule is not against suffixes. The rule is against suffixes
-as **the only content of a name**. A `CancelOrderHandler` is fine
-because the name says what is being handled; a `Handler` is not
-because the name says only that something is being handled, by
-something, without specifying what.
+The rule is against suffixes as **the only content of a name** AND
+against suffixes that survive qualification. A `Handler` is refused
+because the name says only that something is being handled; a
+`CancelOrderHandler` is also refused, because the suffix still
+describes the **role the thing plays in someone else's code**,
+not the thing itself. The qualifier does not change the smell; it
+only makes the smell larger and harder to spot.
 
-Three patterns, in increasing order of severity:
+Two patterns, in increasing order of severity:
 
-- **Bare job title** (`Manager`, `Service`, `Handler`) — the
-  worst smell. The class has no focal responsibility, and the
-  suffix is the only content of the name. Refused.
-- **Qualifier plus job title** (`CancelOrderHandler`,
-  `UserCreationService`) — acceptable. The qualifier forces the
-  focal responsibility; the suffix names the role. Kept.
+- **Suffix as name content** (`Manager`, `Service`, `Handler`,
+  `CancelOrderHandler`, `UserCreationService`) — refused. The
+  suffix is part of the name, with or without a qualifier. The
+  name describes a role, not an entity.
 - **Entity name** (`SortedApples`, `ValidatedPayload`,
-  `CancellationRequest`) — the best shape. The name describes what
-  the thing **is**, not what it does for the caller. Preferred.
+  `CancellationRequest`) — the only accepted shape. The name
+  describes what the thing **is**, not what it does for the
+  caller.
 
-The rule prefers the third shape. The second shape is permitted
-when the first is not yet achievable (a refactor in progress).
-The first shape is never permitted.
+The rule accepts the entity shape only. The suffix shape, with
+or without a qualifier, is the smell this rule exists to catch.
 
 ## Why
 
@@ -90,11 +90,13 @@ Six unrelated responsibilities under one name. The next contributor
 who adds a method asks "where does it go?" and the answer is
 "UserManager". The class grows until it is unmanageable.
 
-The second shape, qualified job title, is the **right intermediate
-shape** when the class genuinely does one thing:
+The second shape, qualified job title, is the shape the rule
+**refuses**. It is mentioned here only because it is what most
+codebases reach for as the "smaller" compromise:
 
 ```ts
-// Acceptable — the qualifier says what is cancelled.
+// Refused — the suffix still describes a role, not an entity.
+// The qualifier makes the smell larger, not smaller.
 class OrderCancellationHandler {
   handle(command: CancelOrderCommand): CancellationResult {
     /* ... */
@@ -102,14 +104,16 @@ class OrderCancellationHandler {
 }
 ```
 
-One responsibility, named by what it operates on plus what it does.
-The qualifier (`OrderCancellation`) is the focal name; the suffix
-(`Handler`) is the role.
+The qualifier does not turn a role into an entity. The class is
+still named for what it does for the caller (`Handler`), not for
+what it is. A reader who meets `OrderCancellationHandler` learns
+that there is a handler; they still have to read the body to
+discover that the handler is the cancellation.
 
-The third shape, entity name, is the **preferred shape**:
+The right shape:
 
 ```ts
-// Preferred — the name describes what the thing is.
+// The name describes what the thing is.
 class OrderCancellation {
   cancel(command: CancelOrderCommand): CancellationResult {
     /* ... */
@@ -139,23 +143,36 @@ manager = new OrderCancellationHandler();` is acceptable; the
 - **Build-time tooling**. Generated code, vendor bindings, and
   frameworks where the shape is fixed by the other side.
 
-## How to refactor a bare job title
+## How to refactor a suffix-bearing name
 
-When a contributor has written `Manager`, `Service`, or `Handler`
-alone, the refactor has three steps, in order of preference:
+When a contributor has written `Manager`, `Service`, `Handler`,
+or any qualified version (`CancelOrderHandler`,
+`UserCreationService`), the refactor has two steps, in order:
 
-1. **Qualify.** `Manager` → `OrderCancellationManager`. The name
-   now says what is managed. This is the smallest change.
-2. **Divide.** If the qualified name still does not fit — if
-   `OrderCancellationManager` ends up with methods that do not
-   cancel orders — the class does not have a focal
-   responsibility. Split it.
-3. **Rename to entity.** If the class is the thing it operates
-   on (it is the cancellation, the validation, the sort), rename
-   it to the entity. `OrderCancellationHandler` → `OrderCancellation`.
+1. **Identify the entity.** The class is doing something for the
+   caller. The thing it operates on, or the thing it **is**, is
+   the entity. A `CancelOrderHandler` is the cancellation; the
+   qualifier already names it. A `UserCreationService` is the user
+   creation; the qualifier already names it. The entity is in
+   the qualifier; the suffix is what is removed.
+2. **Rename to the entity, drop the suffix.**
+   `CancelOrderHandler` → `OrderCancellation`. `UserCreationService`
+   → `UserCreation`. The method on the entity is the action
+   (`cancel`, `create`).
 
-The first step is the cheapest. The third is the right answer
-when the first and second are not achievable.
+There is no "smallest change" path that keeps the suffix. The
+suffix is the smell; removing it is the change. If the class is
+too small to deserve its own entity name, the qualifier is
+replaced by the action: `cancelOrder(command: CancelOrderCommand)`
+is a function on the `OrderCancellationService` — but the function
+itself does not need a wrapper class; it is a function.
+
+The refactor in three steps when the class is large enough:
+
+1. Split into one entity per focal responsibility.
+2. Each entity exposes one operation (`cancel`, `create`,
+   `validate`).
+3. The suffix goes away with the wrapper class.
 
 ## What this looks like in violation — the focused case
 
@@ -233,17 +250,22 @@ the methods times the tests; the suffix makes the cost invisible.
 > — Jimmy Bogard, _Domain Command Patterns - Handlers_,
 > March 2018.
 
-Bogard is the counter-example. The handler suffix is fine when
-it is qualified by the command it handles. The shape Bogard
-recommends — `CancelOrderHandler` — is exactly the second shape
-above: qualifier plus role. The rule's allowance of qualified
-suffixes is Bogard's contribution; the rule's refusal of bare
-suffixes is Bugayenko's.
+Bogard's position is the most permissive of the four sources. The
+rule does not follow Bogard; the rule follows Bugayenko. The
+qualifier-plus-suffix shape Bogard recommends is, in this rule's
+reading, still a role-naming convention: `CancelOrderHandler`
+tells the reader what the thing does for the caller, not what
+the thing is. The rule's stance is that a class which is
+described by what it does for the caller should be a function
+on the entity it operates on, not a wrapper class. The
+qualifier is the entity; the suffix is the wrapper.
 
-The four voices converge on the operational rule: a suffix is
-acceptable when it describes the **role** in a single focal
-operation; a suffix is refused when it is the only content of a
-name and the class is unfocal.
+The four voices still converge on the **diagnosis** — the suffix
+is a smell — even when they disagree on the **threshold**. The
+rule picks the strictest threshold: no suffix, with or without a
+qualifier. The other positions describe intermediate shapes
+project contributors may reach for during a refactor; the rule
+captures the shape the project is moving toward.
 
 ## Enforcement
 
@@ -261,18 +283,22 @@ name and the class is unfocal.
 
 ## Exceptions
 
-A qualifier-plus-suffix name (`CancelOrderHandler`,
-`UserCreationService`) is permitted. The qualifier is the focal
-content; the suffix is the role. The rule refuses **bare** suffixes,
-not **qualified** suffixes.
-
 A test class name (`UserManagerTest`) is permitted because it
 mirrors the type under test. The test class is not the entity; it
-is the verification of the entity.
+is the verification of the entity. Renaming `UserManagerTest` to
+`UserTest` while the type under test is still `UserManager` would
+create a useless indirection; the rename is the responsibility of
+the type rename, not the test rename.
 
 A variable that holds an instance briefly (`const manager = ...`)
 is permitted. The type name carries the focal responsibility; the
-variable name is local.
+variable name is local. The rule refuses type names, not
+variable names.
+
+Build-time tooling, generated code, vendor bindings, and
+frameworks where the shape is fixed by the other side are
+permitted. The rule applies to code the project writes, not to
+code the project consumes.
 
 ## See also
 
