@@ -35,6 +35,7 @@ inherit from it.
 | 0012 | Prefer `type` Over `interface`                   | Shapes are declared with `type`; `interface` is reserved for declaration merging, class implementation of open shapes, and host type augmentation.                                       |
 | 0013 | Entity-First Naming                              | Any name that ends in `-er` (`Manager`, `Service`, `Handler`, `CancelOrderHandler`) is refused; only entity names (`OrderCancellation`) are accepted.                                    |
 | 0014 | Functions Over Classes for Public API            | Classes are internal implementation details; the public API exports factory functions (`group()`, `createGroup()`), never `new ClassName()`.                                             |
+| 0015 | Domain-Specific Types Over Primitives            | A `Message` is a `Message` (with `content`, `type`, …), not a bare `string`; an `Id` is a branded type, not a bare `string`. Primitives cross boundaries only at conversion functions.   |
 
 ## How to read this folder
 
