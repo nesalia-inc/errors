@@ -114,6 +114,16 @@ describe('causes() function', () => {
       expect(causes({})).toEqual([]);
     });
 
+    it('should return empty array when causes property is not an array', () => {
+      // Regression for issue #74: a non-array `causes` property
+      // (e.g. from a malformed foreign value) must not be returned
+      // as-is. The structural guard rejects the shape before any
+      // cast reaches the consumer.
+      expect(causes({ causes: 'not an array' })).toEqual([]);
+      expect(causes({ causes: null })).toEqual([]);
+      expect(causes({ causes: { length: 1, 0: 'fake' } })).toEqual([]);
+    });
+
     it('should return causes property directly', () => {
       const AppError = error({ name: 'AppError' });
       const cause = AppError();
