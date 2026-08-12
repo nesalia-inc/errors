@@ -13,7 +13,7 @@
 
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { ErrorFactory, ErrorInstance } from './types.js';
+import type { ErrorFactory, ErrorInstance, ErrorFactoryConfig, InferFields } from './types.js';
 import { ErrorFactoryImpl } from './internal/error-factory-impl.js';
 
 /**
@@ -104,12 +104,19 @@ const factoryCallable = <TFields extends Record<string, unknown>>(
  * });
  * ```
  */
-export const error = <const T extends Record<string, unknown> = Record<string, never>>(config: {
-  name: string;
-  fields?: StandardSchemaV1;
-  inherits?: ErrorFactory | ErrorFactory[];
-  message?: string;
-}): ErrorFactory<T> => {
-  const impl = new ErrorFactoryImpl<T>(config.name, config.inherits, config.fields, config.message);
-  return factoryCallable<T>(impl);
+export const error = <
+  const S extends StandardSchemaV1 | undefined = undefined,
+>(
+  config: ErrorFactoryConfig<S>
+): ErrorFactory<InferFields<S>> => {
+  // Field shape inferred from the schema's output type; if no
+  // schema is provided, defaults to Record<string, never>.
+  type Fields = InferFields<S>;
+  const impl = new ErrorFactoryImpl<Fields>(
+    config.name,
+    config.inherits,
+    config.fields,
+    config.message
+  );
+  return factoryCallable<Fields>(impl);
 };

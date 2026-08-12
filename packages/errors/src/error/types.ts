@@ -21,6 +21,23 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
  */
 export const ErrorInstanceBrand: unique symbol = Symbol('@deessejs/errors/brand');
 
+/**
+ * Schema inference helper. Extracts the field shape from a Standard
+ * Schema, defaulting to `Record<string, never>` when no schema is
+ * provided. Used at the call site to derive the error's generic.
+ *
+ * The intersection with `Record<string, unknown>` widens the spec's
+ * `InferOutput<S>` (which can resolve to `never` for schemas that
+ * omit `types`) into a usable record at the `ErrorFactory<TFields>`
+ * boundary; see the comment in the README and the changelog for
+ * the rationale.
+ *
+ * @internal
+ */
+export type InferFields<S> = [S] extends [StandardSchemaV1]
+  ? StandardSchemaV1.InferOutput<S> & Record<string, unknown>
+  : Record<string, never>;
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -95,16 +112,24 @@ export type ErrorInstance<TFields extends Record<string, unknown> = Record<strin
   };
 
 /**
- * Full error config for the error() function.
+ * Configuration accepted by the `error()` factory.
  *
- * @internal
+ * The `S` generic is the Standard Schema type (when one is provided
+ * via `fields`). It is unbounded by default — most callers do not
+ * pass a schema and get the empty-record default. Callers that do
+ * pass a schema can rely on TS to infer the field shape downstream.
+ *
+ * Named here (rather than inlined at the call signature) so the
+ * `error()` declaration reads as a single line and the config shape
+ * is independently typeable for callers who want to compose
+ * configurations programmatically.
  */
-export type ErrorConfig<_T extends Record<string, unknown> = Record<string, unknown>> = {
+export type ErrorFactoryConfig<S extends StandardSchemaV1 | undefined = undefined> = {
   /** Error name identifier */
   name: string;
   /** Standard Schema field definitions */
-  fields?: StandardSchemaV1;
-  /** Single parent error factory to inherit from */
+  fields?: S;
+  /** Single parent error factory, or list of parents, to inherit from */
   inherits?: ErrorFactory | ErrorFactory[];
   /** Message template with {field} placeholders */
   message?: string;
