@@ -7,6 +7,7 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import type { ErrorFactory, ErrorInstance } from './types.js';
+import { ErrorInstanceBrand } from './types.js';
 import { captureStack } from './capture.js';
 import { formatTemplate, hasTemplatePlaceholders } from './format.js';
 
@@ -21,6 +22,20 @@ import { formatTemplate, hasTemplatePlaceholders } from './format.js';
  * @internal
  */
 const FACTORY_SYMBOL = Symbol.for('@deessejs/errors/factory');
+
+/**
+ * Attach the brand marker to a freshly-constructed instance.
+ *
+ * This is the only place in the codebase that performs the brand
+ * assignment. The cast inside is local to the helper and cannot be
+ * reproduced by consumers — the brand property is declared `readonly`
+ * on `ErrorInstance<TFields>`, and the helper is not exported.
+ *
+ * @internal
+ */
+const brandInstance = (instance: ErrorInstance<Record<string, unknown>>): void => {
+  (instance as { [ErrorInstanceBrand]: 'ErrorInstance' })[ErrorInstanceBrand] = 'ErrorInstance';
+};
 
 // ============================================================================
 // Error Factory
@@ -107,6 +122,11 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
     instance.causes = [];
     instance.context = null;
     instance.inherits = inherits ?? undefined;
+    // Brand the instance. The `readonly` modifier on the brand
+    // property is intentional: it prevents consumer code from minting
+    // branded instances. The helper below is the single internal
+    // escape hatch; the cast it carries is not exposed.
+    brandInstance(instance);
     instance.stack = stack;
 
     // Add .from() method for exception chaining
