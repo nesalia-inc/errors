@@ -1,26 +1,57 @@
 /**
  * @deessejs/errors - TypeScript Error Handling Library
  *
- * Error factory function and related implementations.
+ * Public surface of the `error()` factory. The internal classes
+ * (`ErrorInstanceImpl`, `ErrorFactoryImpl`) live in `./internal/`
+ * and are not exported. Consumers see only the `ErrorFactory<T>`
+ * and `ErrorInstance<T>` type aliases from `types.ts`.
+ *
+ * Rule 0014 (functions over classes for public API) is satisfied:
+ * the consumer-facing factory is a function; the classes are
+ * implementation details.
  */
 
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { ErrorFactory, ErrorInstance } from './types.js';
-import { captureStack } from './capture.js';
-import { formatTemplate, hasTemplatePlaceholders } from './format.js';
-
-// ============================================================================
-// Symbols for identity
-// ============================================================================
+import type { ErrorFactory, ErrorInstance, ErrorFactoryConfig, InferFields } from './types.js';
+import { ErrorFactoryImpl } from './internal/error-factory-impl.js';
 
 /**
- * Symbol used to identify factory-created errors.
- * Stored on the error instance to enable reliable instanceof checks.
+ * Build a callable factory bound to a given `ErrorFactoryImpl`
+ * instance. The callable carries the public type signature
+ * (a function with metadata properties); the implementation
+ * delegates to `impl.create`.
  *
- * @internal
+ * The callable is built in two passes: first the underlying
+ * function (which closes over `impl` and the `callable` reference
+ * via a late binding), then the metadata is attached. The
+ * `factory` parameter to `impl.create` is the outer callable
+ * itself, so `is()` discriminates by reference equality against
+ * the consumer's callable.
  */
-const FACTORY_SYMBOL = Symbol.for('@deessejs/errors/factory');
+const factoryCallable = <TFields extends Record<string, unknown>>(
+  impl: ErrorFactoryImpl<TFields>
+): ErrorFactory<TFields> => {
+  // The placeholder is rebound below; the closure captures the
+  // outer `callable` via a let binding so `impl.create` can pass
+  // it back to the ErrorInstanceImpl constructor.
+  const callable = ((input?: Partial<TFields>): ErrorInstance<TFields> =>
+    impl.create(input, callable)) as ErrorFactory<TFields>;
+  // Attach metadata as own properties so the consumer sees the
+  // public shape (callable + name + inherits + schema + rawMessage).
+  // Function `name` is read-only in JS — use `defineProperty` to
+  // set it without a `as` cast.
+  Object.defineProperty(callable, 'name', {
+    value: impl.name,
+    writable: false,
+    enumerable: false,
+    configurable: false,
+  });
+  if (impl.inherits !== undefined) callable.inherits = impl.inherits;
+  if (impl.schema !== undefined) callable.schema = impl.schema;
+  if (impl.rawMessage !== undefined) callable.rawMessage = impl.rawMessage;
+  return callable;
+};
 
 // ============================================================================
 // Error Factory
@@ -73,91 +104,17 @@ const FACTORY_SYMBOL = Symbol.for('@deessejs/errors/factory');
  * });
  * ```
  */
-export const error = <const T extends Record<string, unknown> = Record<string, never>>(config: {
-  name: string;
-  fields?: StandardSchemaV1;
-  inherits?: ErrorFactory | ErrorFactory[];
-  message?: string;
-}): ErrorFactory<T> => {
-  const { name, fields, inherits, message } = config;
-
-  /**
-   * Error factory function - creates error instances.
-   */
-  const ErrorFactoryInstance = (input?: Partial<T>): ErrorInstance<T> => {
-    const fieldsData = (input || {}) as T;
-
-    // Format message if template has placeholders
-    let errorMessage = name;
-    if (message && hasTemplatePlaceholders(message)) {
-      errorMessage = formatTemplate(message, fieldsData);
-    } else if (message) {
-      errorMessage = message;
-    }
-
-    // Capture stack trace
-    const stack = captureStack(errorMessage);
-
-    // Create error instance using native Error
-    const instance = new Error(errorMessage) as ErrorInstance<T>;
-    instance.name = name;
-    instance.fields = fieldsData;
-    instance.notes = [];
-    instance.cause = null;
-    instance.causes = [];
-    instance.context = null;
-    instance.inherits = inherits ?? undefined;
-    instance.stack = stack;
-
-    // Add .from() method for exception chaining
-    instance.from = (cause: Error): ErrorInstance<T> => {
-      // Build new causes array: [new cause] + [cause's causes] + [existing causes of instance]
-      // This maintains chronological order: newest first
-      const causeCauses = 'causes' in cause && Array.isArray(cause.causes) ? cause.causes : [];
-      instance.causes = [cause, ...causeCauses, ...instance.causes];
-      instance.cause = cause;
-      return instance;
-    };
-
-    // Add .addNote() method for runtime context (PEP 678)
-    instance.addNote = (note: string): ErrorInstance<T> => {
-      instance.notes.push(note);
-      return instance;
-    };
-
-    // Mark this instance as created by this factory (for is() checks)
-    // Use callable to avoid generic parameter conflicts
-    (instance as unknown as Record<typeof FACTORY_SYMBOL, () => unknown>)[FACTORY_SYMBOL] =
-      ErrorFactoryInstance;
-
-    return instance;
-  };
-
-  // Attach metadata to the factory function
-  Object.defineProperty(ErrorFactoryInstance, 'name', {
-    value: name,
-    writable: false,
-    enumerable: false,
-    configurable: false,
-  });
-
-  if (inherits !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).inherits = inherits;
-  }
-
-  if (fields !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).schema = fields;
-  }
-
-  if (message !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).rawMessage = message;
-  }
-
-  return ErrorFactoryInstance as ErrorFactory<T>;
+export const error = <const S extends StandardSchemaV1 | undefined = undefined>(
+  config: ErrorFactoryConfig<S>
+): ErrorFactory<InferFields<S>> => {
+  // Field shape inferred from the schema's output type; if no
+  // schema is provided, defaults to Record<string, never>.
+  type Fields = InferFields<S>;
+  const impl = new ErrorFactoryImpl<Fields>(
+    config.name,
+    config.inherits,
+    config.fields,
+    config.message
+  );
+  return factoryCallable<Fields>(impl);
 };
-
-// ============================================================================
-// Exports for is() function
-// ============================================================================
-
-export { FACTORY_SYMBOL };
