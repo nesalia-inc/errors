@@ -107,6 +107,118 @@ class ErrorInstanceImpl<TFields extends Record<string, unknown>> extends Error {
 }
 
 // ============================================================================
+// Internal factory class
+// ============================================================================
+
+/**
+ * Internal factory class. Owns the factory's metadata (`name`,
+ * `inherits`, `schema`, `rawMessage`) and the `create` method that
+ * mints `ErrorInstance` instances.
+ *
+ * The class is **not exported**. The factory function `error()`
+ * returns a callable bound to the instance; consumers see only
+ * the `ErrorFactory<T>` type alias from `types.ts`. Rule 0014
+ * (functions over classes for public API) is satisfied because
+ * the constructor is not exposed.
+ *
+ * @internal
+ */
+class ErrorFactoryImpl<TFields extends Record<string, unknown>> {
+  name: string;
+  inherits?: ErrorFactory | ErrorFactory[];
+  schema?: StandardSchemaV1;
+  rawMessage?: string;
+
+  constructor(
+    name: string,
+    inherits?: ErrorFactory | ErrorFactory[],
+    schema?: StandardSchemaV1,
+    rawMessage?: string
+  ) {
+    this.name = name;
+    this.inherits = inherits;
+    this.schema = schema;
+    this.rawMessage = rawMessage;
+  }
+
+  /**
+   * Mint a new `ErrorInstance<TFields>` from this factory's
+   * configuration. The factory's `name`, `message`, `inherits` are
+   * captured in the closure; the input `fields` parameter is the
+   * user-supplied field values.
+   *
+   * The `factory` parameter is the *public* callable (the value
+   * returned by `error()`), not the internal `ErrorFactoryImpl`
+   * instance. `is()` discriminates by reference equality against
+   * the consumer's callable; passing the internal instance would
+   * silently break that equality.
+   */
+  create(
+    input: Partial<TFields> | undefined,
+    factory: ErrorFactory<TFields>
+  ): ErrorInstance<TFields> {
+    const fieldsData = (input || {}) as TFields;
+
+    // Format message if template has placeholders
+    let errorMessage = this.name;
+    if (this.rawMessage && hasTemplatePlaceholders(this.rawMessage)) {
+      errorMessage = formatTemplate(this.rawMessage, fieldsData);
+    } else if (this.rawMessage) {
+      errorMessage = this.rawMessage;
+    }
+
+    // Capture stack trace
+    const stack = captureStack(errorMessage);
+
+    return new ErrorInstanceImpl<TFields>(
+      this.name,
+      errorMessage,
+      stack,
+      fieldsData,
+      factory,
+      this.inherits
+    );
+  }
+}
+
+/**
+ * Build a callable factory bound to a given `ErrorFactoryImpl`
+ * instance. The callable carries the public type signature
+ * (a function with metadata properties); the implementation
+ * delegates to `impl.create`.
+ *
+ * The callable is built in two passes: first the underlying
+ * function (which closes over `impl` and the `callable` reference
+ * via a late binding), then the metadata is attached. The
+ * `factory` parameter to `impl.create` is the outer callable
+ * itself, so `is()` discriminates by reference equality against
+ * the consumer's callable.
+ */
+const factoryCallable = <TFields extends Record<string, unknown>>(
+  impl: ErrorFactoryImpl<TFields>
+): ErrorFactory<TFields> => {
+  // The placeholder is rebound below; the closure captures the
+  // outer `callable` via a let binding so `impl.create` can pass
+  // it back to the ErrorInstanceImpl constructor.
+  const callable = ((input?: Partial<TFields>): ErrorInstance<TFields> =>
+    impl.create(input, callable)) as ErrorFactory<TFields>;
+  // Attach metadata as own properties so the consumer sees the
+  // public shape (callable + name + inherits + schema + rawMessage).
+  // Function `name` is read-only in JS — use `defineProperty` to
+  // set it without a `as` cast.
+  Object.defineProperty(callable, 'name', {
+    value: impl.name,
+    writable: false,
+    enumerable: false,
+    configurable: false,
+  });
+  if (impl.inherits !== undefined) callable.inherits = impl.inherits;
+  if (impl.schema !== undefined) callable.schema = impl.schema;
+  if (impl.rawMessage !== undefined) callable.rawMessage = impl.rawMessage;
+  return callable;
+};
+
+// ============================================================================
 // Error Factory
 // ============================================================================
 
@@ -148,6 +260,7 @@ class ErrorInstanceImpl<TFields extends Record<string, unknown>> extends Error {
  *
  * @example
  * ```typescript
+ * ```typescript
  * // Multiple inheritance
  * const NetworkError = error({ name: 'NetworkError' });
  * const StorageError = error({ name: 'StorageError' });
@@ -156,6 +269,7 @@ class ErrorInstanceImpl<TFields extends Record<string, unknown>> extends Error {
  *   inherits: [NetworkError, StorageError],
  * });
  * ```
+ * ```
  */
 export const error = <const T extends Record<string, unknown> = Record<string, never>>(config: {
   name: string;
@@ -163,62 +277,8 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
   inherits?: ErrorFactory | ErrorFactory[];
   message?: string;
 }): ErrorFactory<T> => {
-  const { name, fields, inherits, message } = config;
-
-  /**
-   * Error factory function - creates error instances.
-   */
-  const ErrorFactoryInstance = (input?: Partial<T>): ErrorInstance<T> => {
-    const fieldsData = (input || {}) as T;
-
-    // Format message if template has placeholders
-    let errorMessage = name;
-    if (message && hasTemplatePlaceholders(message)) {
-      errorMessage = formatTemplate(message, fieldsData);
-    } else if (message) {
-      errorMessage = message;
-    }
-
-    // Capture stack trace
-    const stack = captureStack(errorMessage);
-
-    // Construct the instance via the internal class. The class extends
-    // Error (so `instance instanceof Error` is true), sets the brand
-    // marker at the field declaration, and accepts the factory
-    // function as a constructor parameter so the FACTORY_SYMBOL
-    // marker is assigned in one place. No post-hoc property
-    // assignment, no cast.
-    return new ErrorInstanceImpl<T>(
-      name,
-      errorMessage,
-      stack,
-      fieldsData,
-      ErrorFactoryInstance,
-      inherits
-    );
-  };
-
-  // Attach metadata to the factory function
-  Object.defineProperty(ErrorFactoryInstance, 'name', {
-    value: name,
-    writable: false,
-    enumerable: false,
-    configurable: false,
-  });
-
-  if (inherits !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).inherits = inherits;
-  }
-
-  if (fields !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).schema = fields;
-  }
-
-  if (message !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).rawMessage = message;
-  }
-
-  return ErrorFactoryInstance as ErrorFactory<T>;
+  const impl = new ErrorFactoryImpl<T>(config.name, config.inherits, config.fields, config.message);
+  return factoryCallable<T>(impl);
 };
 
 // ============================================================================
