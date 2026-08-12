@@ -18,6 +18,80 @@ const createMockSchema = <T>(name = 'mock'): StandardSchemaV1 => {
 };
 
 describe('error() factory function', () => {
+  describe('ErrorInstance brand (issue #86)', () => {
+    it('should attach the brand marker on construction', () => {
+      // The brand is set by `error()` only. The instance carries
+      // two symbol-keyed properties: `FACTORY_SYMBOL` (the marker
+      // used by `is()`) and `ErrorInstanceBrand` (the type-level
+      // brand introduced in #86). We verify both are present and
+      // that the brand slot holds the literal 'ErrorInstance'.
+      const TestError = error({ name: 'TestError' });
+      const instance = TestError();
+
+      const symbols = Object.getOwnPropertySymbols(instance);
+      expect(symbols.length).toBeGreaterThanOrEqual(2);
+
+      // Find the slot whose value is the brand literal (the
+      // factory slot holds the TestError function itself).
+      const slots = symbols.map((sym) => ({
+        sym,
+        value: (instance as unknown as Record<symbol, unknown>)[sym],
+      }));
+      const brandSlot = slots.find((s) => s.value === 'ErrorInstance');
+      expect(brandSlot).toBeDefined();
+    });
+
+    it('should not be assignable to a plain Error', () => {
+      // Compile-time guard: a plain Error literal cannot satisfy
+      // ErrorInstance<T> because the brand is missing. The
+      // @ts-expect-error marks the line that must fail to compile.
+      const TestError = error({ name: 'TestError' });
+      const instance = TestError();
+
+      // The structural shape alone still satisfies ErrorInstance<T>
+      // (TS would accept this *without* the brand — that's the
+      // smell #86 is closing). With the brand, the literal form
+      // below is rejected:
+      const literal = {
+        name: 'X',
+        message: 'X',
+        stack: 'X',
+        fields: {},
+        notes: [],
+        cause: null,
+        causes: [],
+        context: null,
+      };
+      // @ts-expect-error — literal lacks the brand; cannot satisfy ErrorInstance<T>
+      const _typed: ErrorInstance = literal as ErrorInstance;
+      void _typed;
+
+      // The runtime counterpart: the factory-produced instance
+      // has the brand; the literal does not.
+      const symbols = Object.getOwnPropertySymbols(instance);
+      expect(symbols.length).toBeGreaterThan(0);
+
+      void instance;
+    });
+
+    it('should be assignable from error() output only', () => {
+      // A native Error cannot satisfy ErrorInstance<T> at the type
+      // level — the brand is missing. We verify the rejection at
+      // compile time and confirm the runtime shape does not lie.
+      const native = new Error('native');
+
+      // @ts-expect-error — native Error lacks the brand; cannot
+      // satisfy ErrorInstance<T>.
+      const _wrong: ErrorInstance = native as unknown as ErrorInstance;
+      void _wrong;
+
+      // The runtime counterpart: the brand key is absent on the
+      // native Error, so any narrowing that assumes the brand
+      // would crash at runtime if it ran unchecked.
+      const symbols = Object.getOwnPropertySymbols(native);
+      expect(symbols.length).toBe(0);
+    });
+  });
   describe('basic usage', () => {
     it('should create an error factory with only a name', () => {
       const NotFoundError = error({

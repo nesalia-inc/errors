@@ -5,6 +5,25 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 // ============================================================================
+// Brand
+// ============================================================================
+
+/**
+ * Internal brand symbol used to mark values produced by `error()`.
+ * The symbol is created and assigned in `error.ts`; this export
+ * exposes it for the type declaration only (consumers cannot write
+ * to it because the property is declared `readonly`).
+ *
+ * The brand is opaque and `unique`, so the only assignable site is
+ * `error()` itself. Object literals and foreign shapes cannot
+ * satisfy `ErrorInstance<T>` at the type level — the brand is the
+ * operational form of rule 0004: the type is the guard.
+ *
+ * @internal
+ */
+export const ErrorInstanceBrand: unique symbol = Symbol('@deessejs/errors/brand');
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -39,6 +58,15 @@ export type ErrorFactory<TFields extends Record<string, unknown> = Record<string
  */
 export type ErrorInstance<TFields extends Record<string, unknown> = Record<string, never>> =
   ErrorInstanceCore & {
+    /**
+     * Brand marker. Set by `error()` at construction time; cannot be
+     * set by any other code path. The brand is what makes
+     * `ErrorInstance<T>` distinguishable from a duck-typed object at
+     * the type level — see `ErrorInstanceBrand` for the rationale.
+     *
+     * @internal
+     */
+    readonly [ErrorInstanceBrand]: 'ErrorInstance';
     /** User-defined fields from Standard Schema */
     fields: TFields;
     /** Additional notes added via .addNote() */

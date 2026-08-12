@@ -7,6 +7,7 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import type { ErrorFactory, ErrorInstance } from './types.js';
+import { ErrorInstanceBrand } from './types.js';
 import { captureStack } from './capture.js';
 import { formatTemplate, hasTemplatePlaceholders } from './format.js';
 
@@ -107,6 +108,15 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
     instance.causes = [];
     instance.context = null;
     instance.inherits = inherits ?? undefined;
+    // Brand marker — only this code path can set it. The brand is
+    // what makes ErrorInstance<T> distinguishable from a duck-typed
+    // object at the type level (see ErrorInstanceBrand in types.ts).
+    // The cast drops the `readonly` modifier locally so the assignment
+    // compiles; the runtime invariant (only `error()` sets the brand)
+    // is enforced by the fact that the brand property is declared
+    // `readonly` on the type, so consumer code cannot assign it
+    // without an `as` escape hatch.
+    (instance as { [ErrorInstanceBrand]: 'ErrorInstance' })[ErrorInstanceBrand] = 'ErrorInstance';
     instance.stack = stack;
 
     // Add .from() method for exception chaining
