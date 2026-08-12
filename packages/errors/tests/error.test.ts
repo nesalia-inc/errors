@@ -6,13 +6,32 @@ import { describe, it, expect } from 'vitest';
 import { error } from '../src/error/error.js';
 import type { ErrorFactory, ErrorInstance, StandardSchemaV1 } from '../src/index.js';
 
-// Mock Standard Schema interface for testing (simplified StandardSchemaV1)
-const createMockSchema = <T>(name = 'mock'): StandardSchemaV1 => {
+// Mock Standard Schema interface for testing (simplified StandardSchemaV1).
+// The `types` field is what makes Standard Schema inference work; without
+// it, the schema is a uniform `StandardSchemaV1<unknown, unknown>` and
+// no useful type information propagates.
+const createMockSchema = <Input, Output>(name = 'mock'): StandardSchemaV1<Input, Output> => {
   return {
     '~standard': {
       version: 1,
       vendor: name,
-      validate: () => ({ value: undefined as unknown as T }),
+      types: undefined as never,
+      validate: () => ({ value: undefined as unknown as Output }),
+    },
+  };
+};
+
+/**
+ * Standard Schema-compliant mock that declares its input/output
+ * types. Use this when a test needs inference to propagate (issue #83).
+ */
+const createTypedMockSchema = <Input, Output>(name = 'mock'): StandardSchemaV1<Input, Output> => {
+  return {
+    '~standard': {
+      version: 1,
+      vendor: name,
+      types: { input: undefined as unknown as Input, output: undefined as unknown as Output },
+      validate: () => ({ value: undefined as unknown as Output }),
     },
   };
 };
@@ -378,6 +397,48 @@ describe('error() factory function', () => {
       const instance = TestError({ field: 'value' });
 
       expect(instance.stack).toContain('Custom message for value');
+    });
+  });
+
+  describe('Standard Schema type inference (issue #83)', () => {
+    it('should infer the field shape from a typed schema', () => {
+      // Regression for issue #83: the field shape is derived from the
+      // schema's output type, not from a placeholder T parameter.
+      const schema = createTypedMockSchema<unknown, { email: string; age: number }>();
+      const ValidationError = error({ name: 'ValidationError', fields: schema });
+
+      // The factory accepts exactly the schema's output shape as input.
+      // This line is the inference contract: it must type-check without
+      // an explicit `<{ email: string; age: number }>` annotation.
+      const instance = ValidationError({ email: 'a@b.c', age: 30 });
+      void instance;
+
+      expect(ValidationError.name).toBe('ValidationError');
+    });
+
+    it('should fall back to Record<string, never> when no fields are provided', () => {
+      // When `fields` is omitted, the field shape is empty. The factory
+      // accepts an optional input (Partial<Record<string, never>> is
+      // effectively `{}`), and the instance has no typed fields.
+      const SimpleError = error({ name: 'SimpleError' });
+
+      const instance = SimpleError();
+      expect(instance.fields).toEqual({});
+    });
+
+    it('should infer without requiring an explicit T annotation', () => {
+      // The schema declares its output. The factory's return type
+      // carries that output through `InferFields<S>`.
+      type EmailOutput = { email: string };
+      const schema = createTypedMockSchema<unknown, EmailOutput>();
+      const Factory = error({ name: 'EmailError', fields: schema });
+
+      // Type assertion at compile time: the call must accept `EmailOutput`.
+      // If inference were broken, this would fail with a type error.
+      const _check: (input?: Partial<EmailOutput>) => ErrorInstance<EmailOutput> = Factory;
+      void _check;
+
+      expect(typeof Factory).toBe('function');
     });
   });
 });

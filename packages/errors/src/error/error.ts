@@ -6,7 +6,7 @@
 
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { ErrorFactory, ErrorInstance } from './types.js';
+import type { ErrorFactory, ErrorInstance, InferFields } from './types.js';
 import { captureStack } from './capture.js';
 import { formatTemplate, hasTemplatePlaceholders } from './format.js';
 
@@ -73,19 +73,20 @@ const FACTORY_SYMBOL = Symbol.for('@deessejs/errors/factory');
  * });
  * ```
  */
-export const error = <const T extends Record<string, unknown> = Record<string, never>>(config: {
+export const error = <const S extends StandardSchemaV1 | undefined = undefined>(config: {
   name: string;
-  fields?: StandardSchemaV1;
+  fields?: S;
   inherits?: ErrorFactory | ErrorFactory[];
   message?: string;
-}): ErrorFactory<T> => {
+}): ErrorFactory<InferFields<S>> => {
+  type Fields = InferFields<S>;
   const { name, fields, inherits, message } = config;
 
   /**
    * Error factory function - creates error instances.
    */
-  const ErrorFactoryInstance = (input?: Partial<T>): ErrorInstance<T> => {
-    const fieldsData = (input || {}) as T;
+  const ErrorFactoryInstance = (input?: Partial<Fields>): ErrorInstance<Fields> => {
+    const fieldsData = (input || {}) as Fields;
 
     // Format message if template has placeholders
     let errorMessage = name;
@@ -99,7 +100,7 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
     const stack = captureStack(errorMessage);
 
     // Create error instance using native Error
-    const instance = new Error(errorMessage) as ErrorInstance<T>;
+    const instance = new Error(errorMessage) as ErrorInstance<Fields>;
     instance.name = name;
     instance.fields = fieldsData;
     instance.notes = [];
@@ -110,7 +111,7 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
     instance.stack = stack;
 
     // Add .from() method for exception chaining
-    instance.from = (cause: Error): ErrorInstance<T> => {
+    instance.from = (cause: Error): ErrorInstance<Fields> => {
       // Build new causes array: [new cause] + [cause's causes] + [existing causes of instance]
       // This maintains chronological order: newest first
       const causeCauses = 'causes' in cause && Array.isArray(cause.causes) ? cause.causes : [];
@@ -120,7 +121,7 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
     };
 
     // Add .addNote() method for runtime context (PEP 678)
-    instance.addNote = (note: string): ErrorInstance<T> => {
+    instance.addNote = (note: string): ErrorInstance<Fields> => {
       instance.notes.push(note);
       return instance;
     };
@@ -142,18 +143,18 @@ export const error = <const T extends Record<string, unknown> = Record<string, n
   });
 
   if (inherits !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).inherits = inherits;
+    (ErrorFactoryInstance as ErrorFactory<Fields>).inherits = inherits;
   }
 
   if (fields !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).schema = fields;
+    (ErrorFactoryInstance as ErrorFactory<Fields>).schema = fields;
   }
 
   if (message !== undefined) {
-    (ErrorFactoryInstance as ErrorFactory<T>).rawMessage = message;
+    (ErrorFactoryInstance as ErrorFactory<Fields>).rawMessage = message;
   }
 
-  return ErrorFactoryInstance as ErrorFactory<T>;
+  return ErrorFactoryInstance as ErrorFactory<Fields>;
 };
 
 // ============================================================================

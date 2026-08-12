@@ -5,6 +5,28 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 // ============================================================================
+// Schema inference
+// ============================================================================
+
+/**
+ * Extracts the field shape from a Standard Schema, defaulting to
+ * `Record<string, never>` when no schema is provided.
+ *
+ * When `S extends StandardSchemaV1`, the output type of the schema is
+ * used as the field shape. When `S` is `undefined` (the default for
+ * schemas that are not passed to `error()`), an empty record is used.
+ *
+ * The `[S] extends [StandardSchemaV1]` form is used (instead of the
+ * naked conditional) to avoid distributing over union types and to
+ * ensure the `undefined` branch is matched as a whole.
+ *
+ * @internal
+ */
+export type InferFields<S> = [S] extends [StandardSchemaV1]
+  ? StandardSchemaV1.InferOutput<S> & Record<string, unknown>
+  : Record<string, never>;
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -86,13 +108,16 @@ export type ErrorInstance<TFields extends Record<string, unknown> = Record<strin
 /**
  * Full error config for the error() function.
  *
- * @internal - Type parameter reserved for future Standard Schema type inference
+ * Mirrors the public `error()` signature for callers that want to
+ * type a config object separately. The `fields` parameter accepts
+ * any Standard Schema-compliant validator; the field shape is
+ * inferred from the schema's output type.
  */
-export type ErrorConfig<_T extends Record<string, unknown> = Record<string, unknown>> = {
+export type ErrorConfig<S extends StandardSchemaV1 | undefined = undefined> = {
   /** Error name identifier */
   name: string;
   /** Standard Schema field definitions */
-  fields?: StandardSchemaV1;
+  fields?: S;
   /** Single parent error factory to inherit from */
   inherits?: ErrorFactory | ErrorFactory[];
   /** Message template with {field} placeholders */
