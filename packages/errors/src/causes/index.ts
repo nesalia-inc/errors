@@ -2,18 +2,27 @@
  * Cause chain traversal utilities.
  */
 
-import type { ErrorInstance } from '../error/types.js';
-
 /**
  * Returns all causes in the error chain, from most recent to root cause.
  *
- * @param error - The error to get causes from
- * @returns Array of errors in the cause chain, ordered newest to oldest
+ * The function uses a structural guard (`'causes' in error && Array.isArray(error.causes)`)
+ * rather than a type cast. This is rule 0004 in operational form: the
+ * guard is named, the scenario it covers is named, and the input can be
+ * `unknown` without an `as ErrorInstance` cast at the call site.
+ *
+ * @param error - The error to get causes from (any value; `null` and
+ * `undefined` return `[]`)
+ * @returns Array of errors in the cause chain, ordered newest to
+ * oldest. Returns `[]` when the input does not carry a `causes` array.
  *
  * @example
- * ```typescript try {
- *   // ... } catch (err) {   const chain = causes(err);
- *   chain.forEach(e => logError(e));
+ * ```typescript
+ * import { causes, raise } from '@deessejs/errors';
+ *
+ * try {
+ *   await sync();
+ * } catch (err) {
+ *   causes(err).forEach((cause) => logError(cause));
  * }
  * ```
  *
@@ -32,14 +41,15 @@ const causes = (error: unknown): Error[] => {
     return [];
   }
 
-  // Get the causes array from the error
-  const instance = error as ErrorInstance;
-
-  if (Array.isArray(instance.causes)) {
-    return instance.causes;
+  if (typeof error !== 'object') {
+    return [];
   }
 
-  return [];
+  if (!('causes' in error) || !Array.isArray(error.causes)) {
+    return [];
+  }
+
+  return error.causes;
 };
 
 export { causes };
