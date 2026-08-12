@@ -104,9 +104,7 @@ const factoryCallable = <TFields extends Record<string, unknown>>(
  * });
  * ```
  */
-export const error = <
-  const S extends StandardSchemaV1 | undefined = undefined,
->(
+export const error = <const S extends StandardSchemaV1 | undefined = undefined>(
   config: ErrorFactoryConfig<S>
 ): ErrorFactory<InferFields<S>> => {
   // Field shape inferred from the schema's output type; if no
