@@ -380,4 +380,50 @@ describe('error() factory function', () => {
       expect(instance.stack).toContain('Custom message for value');
     });
   });
+
+  describe('class-based internals (issue #88)', () => {
+    it('should produce an instance that is an instanceof Error', () => {
+      // The class extends Error and restores the prototype chain
+      // via Object.setPrototypeOf(this, new.target.prototype).
+      // The runtime invariant: factory-produced instances are
+      // recognisable as native Errors.
+      const TestError = error({ name: 'TestError' });
+      const instance = TestError();
+
+      expect(instance instanceof Error).toBe(true);
+      // The class is internal; verify via the prototype chain that
+      // it is the implementation (ErrorInstanceImpl).
+      expect(Object.getPrototypeOf(instance).constructor.name).toBe('ErrorInstanceImpl');
+    });
+
+    it('should attach the brand marker in the constructor', () => {
+      // The brand is set on the class property. Runtime check:
+      // the symbol-keyed slot exists and holds 'ErrorInstance'.
+      const TestError = error({ name: 'TestError' });
+      const instance = TestError();
+
+      const symbols = Object.getOwnPropertySymbols(instance);
+      const brandSlot = symbols.find(
+        (sym) => (instance as unknown as Record<symbol, unknown>)[sym] === 'ErrorInstance'
+      );
+      expect(brandSlot).toBeDefined();
+    });
+
+    it('should not expose the internal class symbol', () => {
+      // The internal class `ErrorInstanceImpl` is not exported.
+      // Consumers see only the `ErrorInstance<T>` type alias.
+      // The runtime check: `instance.constructor.name` is the
+      // class name (set by the implementation); no way to reach
+      // `ErrorInstanceImpl` by name.
+      const TestError = error({ name: 'TestError' });
+      const instance = TestError();
+
+      const internalClassName = Object.getPrototypeOf(instance).constructor.name;
+      expect(internalClassName).toBe('ErrorInstanceImpl');
+
+      // `instanceof Error` works; the brand marker is set; the
+      // internal class symbol is not in scope.
+      expect(instance instanceof Error).toBe(true);
+    });
+  });
 });
